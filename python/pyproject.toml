@@ -1,7 +1,7 @@
 [project]
-name = "python"
+name = "bugledger-mcp"
 version = "0.1.0"
-description = "Add your description here"
+description = "A local-first Model Context Protocol (MCP) server for tracking, searching, and preventing recurring software bugs."
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
