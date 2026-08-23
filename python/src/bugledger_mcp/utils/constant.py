@@ -29,3 +29,11 @@ def diff_settings():
     TRUNCATION_MARK = "\n\n[truncated — diff exceeded 32KB]"
     COMMIT_HASH_RE = re.compile(r"^[0-9a-fA-F]{7,40}$")
     return DIFF_CAP, TRUNCATION_MARK, COMMIT_HASH_RE
+
+
+def search_settings():
+    """ Limits for search_bugs. """
+
+    SEARCH_LIMIT = 10
+    return SEARCH_LIMIT
+
