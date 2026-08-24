@@ -12,7 +12,8 @@ _, _, _, _, _, UNKNOWN_RECORD = pattern_settings()
 
 
 def resolve_bug(id: str, project: str):
-    """Mark a bug resolved for one project after a test or fix exists there. Other projects still see it in get_patterns and search until they resolve it too."""
+    """Mark a bug resolved for one project after a test or fix exists there. 
+    Other projects still see it in get_patterns and search until they resolve it too."""
 
     try:
         data = ResolveBugSchema(id=id, project=project)
