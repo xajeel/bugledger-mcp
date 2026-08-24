@@ -1,9 +1,10 @@
 from pydantic import BaseModel, field_validator
 
-from bugledger_mcp.utils.constant import allowed_values, error_texts
+from bugledger_mcp.utils.constant import allowed_values, diff_settings, error_texts
 
-ROOT_CAUSE_TOO_SHORT, INVALID_SEVERITY, INVALID_SOURCE = error_texts()
+ROOT_CAUSE_TOO_SHORT, INVALID_SEVERITY, INVALID_SOURCE, INVALID_FIX_REF = error_texts()
 SEVERITY_VALUES, SOURCE_VALUES, MIN_ROOT_CAUSE_LEN = allowed_values()
+_, _, COMMIT_HASH_RE = diff_settings()
 
 
 class RecordBugSchema(BaseModel):
@@ -33,6 +34,16 @@ class RecordBugSchema(BaseModel):
         value = value.strip().lower()
         if value not in SEVERITY_VALUES:
             raise ValueError(INVALID_SEVERITY)
+        return value
+
+    @field_validator("fix_ref")
+    @classmethod
+    def check_fix_ref(cls, value):
+        if value is None or value.strip() == "":
+            return None
+        value = value.strip()
+        if not COMMIT_HASH_RE.fullmatch(value):
+            raise ValueError(INVALID_FIX_REF)
         return value
 
     @field_validator("source")
