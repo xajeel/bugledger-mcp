@@ -20,6 +20,63 @@ def count_in_area(conn, feature_area):
     return row[0]
 
 
+def get_bug(conn, record_id):
+    """ Returns one record id if it exists. """
+
+    cursor = conn.cursor()
+    row = cursor.execute(
+        "SELECT id FROM bug_records WHERE id = ?",
+        (record_id,),
+    ).fetchone()
+    return row
+
+
+def resolve_bug(conn, record_id, project, resolved_at):
+    """ Marks a record resolved for one project. Search still returns it. """
+
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT OR IGNORE INTO bug_resolutions (record_id, project, resolved_at)
+        VALUES (?, ?, ?)
+        """,
+        (record_id, project, resolved_at),
+    )
+    conn.commit()
+    return cursor.rowcount
+
+
+def get_patterns(conn, feature_area, project, limit):
+    """ Newest records for a feature area, skipping ones resolved for this project. """
+
+    cursor = conn.cursor()
+    total = cursor.execute(
+        """
+        SELECT COUNT(*) FROM bug_records
+        WHERE feature_area = ?
+        AND id NOT IN (
+            SELECT record_id FROM bug_resolutions WHERE project = ?
+        )
+        """,
+        (feature_area, project),
+    ).fetchone()[0]
+    rows = cursor.execute(
+        """
+        SELECT id, symptom, root_cause, project, created_at
+        FROM bug_records
+        WHERE feature_area = ?
+        AND id NOT IN (
+            SELECT record_id FROM bug_resolutions WHERE project = ?
+        )
+        ORDER BY created_at DESC, id DESC
+        LIMIT ?
+        """,
+        (feature_area, project, limit),
+    ).fetchall()
+    return rows, total
+
+
+
 def search_bugs(conn, query, feature_area, project, limit):
     """ FTS5 search over symptom and root_cause. Bad queries return no hits. """
 
