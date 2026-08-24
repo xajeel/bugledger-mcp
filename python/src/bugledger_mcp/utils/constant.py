@@ -10,7 +10,12 @@ def error_texts():
     )
     INVALID_SEVERITY = "severity must be one of: low, medium, high."
     INVALID_SOURCE = "source must be one of: slash, confirm, import."
-    return ROOT_CAUSE_TOO_SHORT, INVALID_SEVERITY, INVALID_SOURCE
+    INVALID_FIX_REF = (
+        "fix_ref must be a git commit hash (7-40 hex chars), e.g. 'a1b2c3d'. "
+        "A file path is not a commit hash. If there is no commit yet, omit "
+        "fix_ref and put the actual patch in diff_hunk instead."
+    )
+    return ROOT_CAUSE_TOO_SHORT, INVALID_SEVERITY, INVALID_SOURCE, INVALID_FIX_REF
 
 
 def allowed_values():
@@ -47,6 +52,16 @@ def record_id_settings():
         "or record_bug. Do not invent one."
     )
     return RECORD_ID_RE, INVALID_RECORD_ID
+
+
+def mutation_settings():
+    """ Error texts for update_bug and delete_bug. """
+
+    NO_FIELDS_TO_UPDATE = (
+        "no fields to update. Pass at least one of: symptom, root_cause, "
+        "feature_area, project, stack, severity, fix_ref, diff_hunk."
+    )
+    return NO_FIELDS_TO_UPDATE
 
 
 def pattern_settings():
