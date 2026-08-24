@@ -46,6 +46,36 @@ def resolve_bug(conn, record_id, project, resolved_at):
     return cursor.rowcount
 
 
+def update_bug(conn, record_id, fields):
+    """ Updates the given columns on one record. `fields` keys are trusted
+    column names chosen by the caller, never raw user input. """
+
+    if not fields:
+        return 0
+
+    columns = list(fields.keys())
+    set_clause = ", ".join(f"{column} = ?" for column in columns)
+    params = [fields[column] for column in columns] + [record_id]
+
+    cursor = conn.cursor()
+    cursor.execute(
+        f"UPDATE bug_records SET {set_clause} WHERE id = ?",
+        params,
+    )
+    conn.commit()
+    return cursor.rowcount
+
+
+def delete_bug(conn, record_id):
+    """ Deletes one record and any resolutions tied to it. """
+
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM bug_resolutions WHERE record_id = ?", (record_id,))
+    cursor.execute("DELETE FROM bug_records WHERE id = ?", (record_id,))
+    conn.commit()
+    return cursor.rowcount
+
+
 def get_patterns(conn, feature_area, project, limit):
     """ Newest records for a feature area, skipping ones resolved for this project. """
 

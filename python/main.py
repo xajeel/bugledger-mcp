@@ -1,4 +1,7 @@
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from bugledger_mcp.mcp_server import mcp
 from bugledger_mcp.tool_registery import *
