@@ -2,6 +2,7 @@ import sqlite3
 import os
 import sqlite3
 import importlib.resources
+import sys
 from pathlib import Path
 
 def get_db_path() -> Path:
@@ -37,7 +38,7 @@ def run_migrations(conn: sqlite3.Connection) -> None:
 
     for index, sql_file in enumerate(sorted_sql_files, start=1):
         if index > user_version:
-            print(f"MIGRATE :> {sql_file.name}")
+            print(f"MIGRATE :> {sql_file.name}", file=sys.stderr)
             file_content = sql_file.read_text(encoding="utf-8")
             cursor.executescript(file_content)
             cursor.execute(f"PRAGMA user_version={index}")
@@ -47,7 +48,6 @@ def init_db():
     """ Initializes the database connection. """
 
     database_path = get_db_path()
-    print(f"DATABASE PATH :> {database_path}")
     conn = sqlite3.connect(database_path)
     run_migrations(conn)
     return conn
