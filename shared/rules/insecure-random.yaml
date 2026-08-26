@@ -1,0 +1,35 @@
+rules:
+  - id: bugledger-insecure-random-py
+    languages:
+      - python
+    severity: WARNING
+    message: >
+      random module is not cryptographically secure. Use secrets module
+      (secrets.token_hex, secrets.token_urlsafe) for tokens, passwords,
+      or any security-sensitive randomness.
+    pattern-either:
+      - pattern: random.random()
+      - pattern: random.randint(...)
+      - pattern: random.choice(...)
+      - pattern: random.choices(...)
+    metadata:
+      category: security
+      cwe: "CWE-338: Use of Cryptographically Weak PRNG"
+      confidence: LOW
+      bugledger-stacks: [python]
+
+  - id: bugledger-insecure-random-js
+    languages:
+      - javascript
+      - typescript
+    severity: WARNING
+    message: >
+      Math.random() is not cryptographically secure. Use
+      crypto.randomUUID(), crypto.getRandomValues(), or the Node.js
+      crypto module for tokens, passwords, or security-sensitive values.
+    pattern: Math.random()
+    metadata:
+      category: security
+      cwe: "CWE-338: Use of Cryptographically Weak PRNG"
+      confidence: LOW
+      bugledger-stacks: [javascript, typescript]
