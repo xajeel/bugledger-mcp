@@ -1,0 +1,57 @@
+rules:
+  - id: bugledger-empty-catch-py
+    languages:
+      - python
+    severity: WARNING
+    message: >
+      Empty except block silently swallows errors. At minimum log the
+      exception. Silenced errors hide bugs and make debugging impossible.
+    pattern-either:
+      - pattern: |
+          try:
+              ...
+          except:
+              pass
+      - pattern: |
+          try:
+              ...
+          except $E:
+              pass
+    metadata:
+      category: reliability
+      cwe: "CWE-390: Detection of Error Condition Without Action"
+      confidence: HIGH
+      bugledger-stacks: [python]
+
+  - id: bugledger-empty-catch-js
+    languages:
+      - javascript
+      - typescript
+    severity: WARNING
+    message: >
+      Empty catch block silently swallows errors. At minimum log the
+      exception. Silenced errors hide bugs and make debugging impossible.
+    pattern: |
+      try { ... } catch ($E) { }
+    metadata:
+      category: reliability
+      cwe: "CWE-390: Detection of Error Condition Without Action"
+      confidence: HIGH
+      bugledger-stacks: [javascript, typescript]
+
+  - id: bugledger-empty-catch-java
+    languages:
+      - java
+      - kotlin
+      - csharp
+    severity: WARNING
+    message: >
+      Empty catch block silently swallows errors. At minimum log the
+      exception. Silenced errors hide bugs and make debugging impossible.
+    pattern: |
+      try { ... } catch ($TYPE $E) { }
+    metadata:
+      category: reliability
+      cwe: "CWE-390: Detection of Error Condition Without Action"
+      confidence: HIGH
+      bugledger-stacks: [java, kotlin, csharp]
