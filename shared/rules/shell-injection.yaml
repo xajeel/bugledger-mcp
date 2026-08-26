@@ -1,0 +1,42 @@
+rules:
+  - id: bugledger-shell-injection-py
+    languages:
+      - python
+    severity: ERROR
+    message: >
+      Shell command built with string formatting. An attacker can inject
+      arbitrary commands. Use subprocess.run with a list of arguments
+      (no shell=True) or shlex.quote() for unavoidable shell usage.
+    patterns:
+      - pattern-either:
+          - pattern: os.system(f"...{$VAR}...")
+          - pattern: os.system("..." + $VAR + "...")
+          - pattern: subprocess.call(f"...{$VAR}...", shell=True, ...)
+          - pattern: subprocess.run(f"...{$VAR}...", shell=True, ...)
+          - pattern: os.popen(f"...{$VAR}...")
+      - pattern-not: os.system(f"...{shlex.quote(...)}...")
+      - pattern-not: os.popen(f"...{shlex.quote(...)}...")
+    metadata:
+      category: security
+      cwe: "CWE-78: OS Command Injection"
+      confidence: HIGH
+      bugledger-stacks: [python]
+
+  - id: bugledger-shell-injection-js
+    languages:
+      - javascript
+      - typescript
+    severity: ERROR
+    message: >
+      Shell command built with dynamic input. An attacker can inject
+      arbitrary commands. Use child_process.execFile or
+      child_process.spawn (no shell) with an args array instead.
+    pattern-either:
+      - pattern: child_process.exec(`...${$VAR}...`)
+      - pattern: child_process.exec("..." + $VAR + "...")
+      - pattern: require("child_process").exec(`...${$VAR}...`)
+    metadata:
+      category: security
+      cwe: "CWE-78: OS Command Injection"
+      confidence: HIGH
+      bugledger-stacks: [javascript, typescript]
