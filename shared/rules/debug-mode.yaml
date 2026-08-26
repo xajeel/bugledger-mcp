@@ -1,0 +1,24 @@
+rules:
+  - id: bugledger-debug-mode
+    languages:
+      - python
+      - javascript
+      - typescript
+      - java
+      - go
+      - ruby
+      - rust
+      - kotlin
+      - csharp
+      - php
+      - scala
+      - swift
+    severity: WARNING
+    message: >
+      Debug mode appears to be enabled. Make sure DEBUG flags are off
+      or driven by environment variables before deploying to production.
+    pattern-regex: '(?i)\bDEBUG\s*[=:]\s*["\x27]?(true|yes|on|1)\b'
+    metadata:
+      category: reliability
+      confidence: MEDIUM
+      bugledger-stacks: [all]

@@ -1,0 +1,50 @@
+rules:
+  - id: bugledger-eval-usage-py
+    languages:
+      - python
+    severity: WARNING
+    message: >
+      eval() executes arbitrary code. If the input comes from a user or
+      an untrusted source this is a remote code execution vulnerability.
+      Use ast.literal_eval() or json.loads() instead, or restructure to
+      avoid dynamic evaluation entirely.
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: exec(...)
+    metadata:
+      category: security
+      cwe: "CWE-95: Improper Neutralization of Directives in Dynamically Evaluated Code"
+      confidence: MEDIUM
+      bugledger-stacks: [python]
+
+  - id: bugledger-eval-usage-js
+    languages:
+      - javascript
+      - typescript
+    severity: WARNING
+    message: >
+      eval() executes arbitrary code. If the input comes from a user or
+      an untrusted source this is a remote code execution vulnerability.
+      Use JSON.parse() instead, or restructure to avoid dynamic
+      evaluation entirely.
+    pattern: eval(...)
+    metadata:
+      category: security
+      cwe: "CWE-95: Improper Neutralization of Directives in Dynamically Evaluated Code"
+      confidence: MEDIUM
+      bugledger-stacks: [javascript, typescript]
+
+  - id: bugledger-eval-usage-rb
+    languages:
+      - ruby
+    severity: WARNING
+    message: >
+      eval() executes arbitrary code. If the input comes from a user or
+      an untrusted source this is a remote code execution vulnerability.
+      Use a safe parser or restructure to avoid dynamic evaluation.
+    pattern: eval(...)
+    metadata:
+      category: security
+      cwe: "CWE-95: Improper Neutralization of Directives in Dynamically Evaluated Code"
+      confidence: MEDIUM
+      bugledger-stacks: [ruby]

@@ -1,0 +1,37 @@
+rules:
+  - id: bugledger-unsafe-deserialize-py
+    languages:
+      - python
+    severity: ERROR
+    message: >
+      Unsafe deserialization. pickle, marshal, and yaml.load (without
+      SafeLoader) can execute arbitrary code. Use json, yaml.safe_load,
+      or a schema-validated format instead.
+    pattern-either:
+      - pattern: pickle.loads(...)
+      - pattern: pickle.load(...)
+      - pattern: marshal.loads(...)
+      - pattern: marshal.load(...)
+      - pattern: yaml.load(...)
+    metadata:
+      category: security
+      cwe: "CWE-502: Deserialization of Untrusted Data"
+      confidence: HIGH
+      bugledger-stacks: [python]
+
+  - id: bugledger-unsafe-deserialize-rb
+    languages:
+      - ruby
+    severity: ERROR
+    message: >
+      Unsafe deserialization. Marshal.load and YAML.load can execute
+      arbitrary code when given untrusted input. Use YAML.safe_load
+      or JSON.parse instead.
+    pattern-either:
+      - pattern: Marshal.load(...)
+      - pattern: YAML.load(...)
+    metadata:
+      category: security
+      cwe: "CWE-502: Deserialization of Untrusted Data"
+      confidence: HIGH
+      bugledger-stacks: [ruby]

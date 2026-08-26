@@ -1,0 +1,25 @@
+rules:
+  - id: bugledger-leftover-marker
+    languages:
+      - python
+      - javascript
+      - typescript
+      - java
+      - go
+      - ruby
+      - rust
+      - kotlin
+      - csharp
+      - php
+      - scala
+      - swift
+    severity: INFO
+    message: >
+      Leftover TODO/FIXME/HACK/XXX marker. Resolve before merging or
+      convert to a tracked issue. Markers that ship to production become
+      invisible tech debt.
+    pattern-regex: '(?i)\b(TODO|FIXME|HACK|XXX)\b'
+    metadata:
+      category: quality
+      confidence: HIGH
+      bugledger-stacks: [all]
