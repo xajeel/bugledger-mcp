@@ -1,0 +1,26 @@
+rules:
+  - id: bugledger-cors-allow-all
+    languages:
+      - python
+      - javascript
+      - typescript
+      - java
+      - go
+      - ruby
+      - rust
+      - kotlin
+      - csharp
+      - php
+      - scala
+      - swift
+    severity: WARNING
+    message: >
+      CORS is configured to allow all origins. This lets any website
+      make authenticated requests to your API. Restrict to trusted
+      origins in production.
+    pattern-regex: '(?i)(Access-Control-Allow-Origin|allow_origin[s]?|cors_origin[s]?|allowed_origin[s]?)\s*[=:]\s*["'']\*["'']'
+    metadata:
+      category: security
+      cwe: "CWE-942: Overly Permissive Cross-domain Whitelist"
+      confidence: MEDIUM
+      bugledger-stacks: [all]
