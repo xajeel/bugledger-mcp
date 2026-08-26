@@ -17,3 +17,20 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - run: uv sync --group test
       - run: uv run pytest
+
+  package-build:
+    name: Package build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: python ../scripts/sync.py
+      - run: uv build
+      - run: |
+          unzip -l dist/*.whl | tee /tmp/wheel.txt
+          grep -q "bugledger_mcp/shared/schema/001_init.sql" /tmp/wheel.txt
+          grep -q "bugledger_mcp/shared/logbug.md" /tmp/wheel.txt
+          grep -q "bugledger_mcp/shared/rules/hardcoded-secret.yaml" /tmp/wheel.txt
