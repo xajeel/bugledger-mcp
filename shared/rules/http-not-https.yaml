@@ -1,0 +1,29 @@
+rules:
+  - id: bugledger-http-not-https
+    languages:
+      - python
+      - javascript
+      - typescript
+      - java
+      - go
+      - ruby
+      - rust
+      - kotlin
+      - csharp
+      - php
+      - scala
+      - swift
+    severity: WARNING
+    message: >
+      Insecure HTTP URL. Use HTTPS to prevent man-in-the-middle attacks.
+      If this is a local development URL, consider using a constant that
+      switches between HTTP and HTTPS based on the environment.
+    patterns:
+      - pattern-regex: 'http://[a-zA-Z0-9]'
+      - pattern-not-regex: 'http://(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|10\.\d|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)'
+      - pattern-not-regex: 'http://(example\.com|example\.org|example\.net)'
+    metadata:
+      category: security
+      cwe: "CWE-319: Cleartext Transmission of Sensitive Information"
+      confidence: LOW
+      bugledger-stacks: [all]
