@@ -1,0 +1,41 @@
+rules:
+  - id: bugledger-sql-injection-py
+    languages:
+      - python
+    severity: ERROR
+    message: >
+      SQL query built with string formatting. Use parameterized queries
+      (cursor.execute("SELECT ... WHERE id = ?", (id,))) to prevent
+      SQL injection.
+    pattern-either:
+      - pattern: |
+          $CURSOR.execute(f"...{$VAR}...")
+      - pattern: |
+          $CURSOR.execute("..." + $VAR + "...")
+      - pattern: |
+          $CURSOR.execute("...%s..." % $VAR)
+    metadata:
+      category: security
+      cwe: "CWE-89: SQL Injection"
+      confidence: HIGH
+      bugledger-stacks: [python]
+
+  - id: bugledger-sql-injection-js
+    languages:
+      - javascript
+      - typescript
+    severity: ERROR
+    message: >
+      SQL query built with template literals or string concatenation.
+      Use parameterized queries (e.g. query("SELECT ... WHERE id = $1",
+      [id])) to prevent SQL injection.
+    pattern-either:
+      - pattern: |
+          $DB.query(`...${$VAR}...`)
+      - pattern: |
+          $DB.query("..." + $VAR + "...")
+    metadata:
+      category: security
+      cwe: "CWE-89: SQL Injection"
+      confidence: HIGH
+      bugledger-stacks: [javascript, typescript]
