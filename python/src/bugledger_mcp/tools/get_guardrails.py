@@ -1,23 +1,15 @@
 import re
-from pathlib import Path
 
 from fastmcp.exceptions import ToolError
 from pydantic import ValidationError
 
 from bugledger_mcp.schema.get_guardrails import GetGuardrailsSchema
 from bugledger_mcp.utils.constant import guardrails_settings
+from bugledger_mcp.utils.shared_files import list_shared_files
 
 _EMPTY_STACK, INSTALL_NOTE = guardrails_settings()
 
 _STACKS_RE = re.compile(r"bugledger-stacks:\s*\[([^\]]+)\]")
-
-
-def _find_rules_dir():
-    for parent in Path(__file__).resolve().parents:
-        path = parent / "shared" / "rules"
-        if path.is_dir():
-            return path
-    raise FileNotFoundError("shared/rules/ not found")
 
 
 def _extract_stacks(content):
@@ -43,10 +35,9 @@ def get_guardrails(stack: str):
     except ValidationError as e:
         raise ToolError(e.errors()[0]["msg"].removeprefix("Value error, "))
 
-    rules_dir = _find_rules_dir()
     matched = []
 
-    for yaml_file in sorted(rules_dir.glob("*.yaml")):
+    for yaml_file in sorted(list_shared_files("rules", suffix=".yaml"), key=lambda p: p.name):
         content = yaml_file.read_text(encoding="utf-8")
         stacks = _extract_stacks(content)
         if _rule_matches(stacks, data.stack):
