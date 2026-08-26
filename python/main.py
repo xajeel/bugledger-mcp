@@ -1,19 +1,4 @@
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent / "src"))
-
-from bugledger_mcp.mcp_server import mcp
-from bugledger_mcp.tool_registery import *
-from bugledger_mcp.database import db
-
-def main():
-    conn = db.init_db()
-    version = conn.execute("PRAGMA user_version").fetchone()[0]
-    print(f"Current migration version: {version}", file=sys.stderr)
-    conn.close()
-    mcp.run()
-
+from bugledger_mcp.mcp_server import main
 
 if __name__ == "__main__":
     main()
