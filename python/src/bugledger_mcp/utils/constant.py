@@ -64,6 +64,30 @@ def mutation_settings():
     return NO_FIELDS_TO_UPDATE
 
 
+def guardrails_settings():
+    """ Error texts and defaults for get_guardrails. """
+
+    EMPTY_STACK = (
+        "stack is required. Pass the primary technology of the project, "
+        "for example python, javascript, or go. Use 'all' for every rule."
+    )
+    INSTALL_NOTE = (
+        "Write these files into .bugledger/ in the project root. "
+        "Add .github/workflows/bugledger.yml with:\n\n"
+        "  name: Bug Ledger Guardrails\n"
+        "  on: [pull_request]\n"
+        "  jobs:\n"
+        "    semgrep:\n"
+        "      runs-on: ubuntu-latest\n"
+        "      steps:\n"
+        "        - uses: actions/checkout@v4\n"
+        "        - run: pip install semgrep\n"
+        "        - run: semgrep --config .bugledger/ --error\n\n"
+        "Do not edit existing CI files. This workflow runs independently."
+    )
+    return EMPTY_STACK, INSTALL_NOTE
+
+
 def pattern_settings():
     """ Limits and error texts for get_patterns. """
 
