@@ -12,6 +12,9 @@ dependencies = [
 test = [
     "pytest>=8",
 ]
+rules = [
+    "semgrep>=1.174.0",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
