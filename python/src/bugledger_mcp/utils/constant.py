@@ -2,7 +2,7 @@ import re
 
 
 def error_texts():
-    """ Error messages the agent sees when record_bug is rejected. """
+    """Error messages the agent sees when record_bug is rejected."""
 
     ROOT_CAUSE_TOO_SHORT = (
         "root_cause is too vague. Write at least 20 characters explaining WHY "
@@ -19,7 +19,7 @@ def error_texts():
 
 
 def allowed_values():
-    """ Allowed field values for record_bug. """
+    """Allowed field values for record_bug."""
 
     SEVERITY_VALUES = ["low", "medium", "high"]
     SOURCE_VALUES = ["slash", "confirm", "import"]
@@ -28,23 +28,23 @@ def allowed_values():
 
 
 def diff_settings():
-    """ Limits and patterns for capturing a fix diff. """
+    """Limits and patterns for capturing a fix diff."""
 
     DIFF_CAP = 32 * 1024
-    TRUNCATION_MARK = "\n\n[truncated — diff exceeded 32KB]"
+    TRUNCATION_MARK = "\n\n[truncated: diff exceeded 32KB]"
     COMMIT_HASH_RE = re.compile(r"^[0-9a-fA-F]{7,40}$")
     return DIFF_CAP, TRUNCATION_MARK, COMMIT_HASH_RE
 
 
 def search_settings():
-    """ Limits for search_bugs. """
+    """Limits for search_bugs."""
 
     SEARCH_LIMIT = 10
     return SEARCH_LIMIT
 
 
 def record_id_settings():
-    """ Ledger ids are minted by record_bug. Agents must copy them. """
+    """Ledger ids are minted by record_bug. Agents must copy them."""
 
     RECORD_ID_RE = re.compile(r"^rec_[0-9]{5,}$")
     INVALID_RECORD_ID = (
@@ -55,7 +55,7 @@ def record_id_settings():
 
 
 def mutation_settings():
-    """ Error texts for update_bug and delete_bug. """
+    """Error texts for update_bug and delete_bug."""
 
     NO_FIELDS_TO_UPDATE = (
         "no fields to update. Pass at least one of: symptom, root_cause, "
@@ -65,15 +65,16 @@ def mutation_settings():
 
 
 def guardrails_settings():
-    """ Error texts and defaults for get_guardrails. """
+    """Error texts and defaults for get_guardrails."""
 
     EMPTY_STACK = (
         "stack is required. Pass the primary technology of the project, "
         "for example python, javascript, or go. Use 'all' for every rule."
     )
     INSTALL_NOTE = (
-        "Write these files into .bugledger/ in the project root. "
-        "Add .github/workflows/bugledger.yml with:\n\n"
+        "Write each rule file into .bugledger/ in the project root, keeping "
+        "its filename. Then add a NEW workflow file "
+        ".github/workflows/bugledger.yml with exactly this content:\n\n"
         "  name: Bug Ledger Guardrails\n"
         "  on: [pull_request]\n"
         "  jobs:\n"
@@ -82,14 +83,19 @@ def guardrails_settings():
         "      steps:\n"
         "        - uses: actions/checkout@v4\n"
         "        - run: pip install semgrep\n"
-        "        - run: semgrep --config .bugledger/ --error\n\n"
-        "Do not edit existing CI files. This workflow runs independently."
+        "        # ERROR rules (injection, secrets, unsafe deserialization) block the PR\n"
+        "        - run: semgrep --config .bugledger/ --severity ERROR --error --metrics=off\n"
+        "        # WARNING rules are advisory: findings are printed, the build stays green\n"
+        "        - run: semgrep --config .bugledger/ --severity WARNING --metrics=off\n\n"
+        "Do not edit existing CI files. This workflow runs on its own. "
+        "To run the same checks locally: semgrep --config .bugledger/ . "
+        "To drop a rule, delete its file from .bugledger/."
     )
     return EMPTY_STACK, INSTALL_NOTE
 
 
 def pattern_settings():
-    """ Limits and error texts for get_patterns. """
+    """Limits and error texts for get_patterns."""
 
     DEFAULT_LIMIT = 15
     MAX_LINES = 30
@@ -97,9 +103,7 @@ def pattern_settings():
         "feature_area is required. Pass the area you are about to plan or build, "
         "for example auth or uploads."
     )
-    EMPTY_PROJECT = (
-        "project is required. Pass the project you are about to plan or build."
-    )
+    EMPTY_PROJECT = "project is required. Pass the project you are about to plan or build."
     INVALID_LIMIT = "limit must be 1 or more."
     UNKNOWN_RECORD = "no bug record with that id."
     return (
@@ -110,5 +114,3 @@ def pattern_settings():
         INVALID_LIMIT,
         UNKNOWN_RECORD,
     )
-
-
