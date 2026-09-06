@@ -1,86 +1,91 @@
-# Bug Ledger MCP
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="artifacts/logo/logo-dark.svg">
+    <img alt="Bug Ledger" src="artifacts/logo/logo.svg" width="400">
+  </picture>
+</p>
 
-**Never fix the same bug twice.** A local-first [MCP](https://modelcontextprotocol.io) server that gives AI coding agents (Claude Code, Cursor, any MCP client) a permanent memory of fixed bugs. Record a bug at fix time; every future session checks the ledger before writing code.
+<p align="center">
+  <strong>Never fix the same bug twice.</strong><br>
+  A local MCP server that gives AI coding agents a permanent memory of the bugs you already fixed.
+</p>
 
-![Bug Ledger architecture](artifacts/architecture.png)
+<p align="center">
+  <a href="https://pypi.org/project/bugledger-mcp/"><img alt="PyPI" src="https://img.shields.io/pypi/v/bugledger-mcp?color=6366F1"></a>
+  <a href="https://pypi.org/project/bugledger-mcp/"><img alt="Python" src="https://img.shields.io/pypi/pyversions/bugledger-mcp"></a>
+  <a href="https://github.com/xajeel/bugledger-mcp/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/xajeel/bugledger-mcp/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-14B8A6"></a>
+</p>
 
-Everything runs on your machine: one SQLite file in `~/.bugledger/`. No login, no cloud, no telemetry, no network calls.
+## What it does
+
+Your agent fixes a bug. You confirm the record. From then on, every session on that project checks the ledger before writing code in that area and can search it while debugging.
+
+- **Before coding**, the agent calls `get_patterns` and sees the past bugs for that feature area.
+- **While debugging**, it calls `search_bugs` with the error text.
+- **After a fix**, you run `/logbug`. The agent drafts the record, you approve, it is stored.
+
+Everything stays on your machine: one SQLite file in `~/.bugledger/`. No account, no cloud, no telemetry.
 
 ## Install
 
-Requires [uv](https://docs.astral.sh/uv/) (Python is downloaded automatically if needed).
+Requires [uv](https://docs.astral.sh/uv/). It downloads Python if needed.
+
+**Claude Code**
 
 ```sh
 claude mcp add bugledger -- uvx bugledger-mcp
 ```
 
-Restart Claude Code. The tools and the `/mcp__bugledger__logbug` prompt appear.
-
-**Cursor:** add to `.cursor/mcp.json`:
+**Cursor**, in `.cursor/mcp.json`:
 
 ```json
 { "mcpServers": { "bugledger": { "command": "uvx", "args": ["bugledger-mcp"] } } }
 ```
 
-**Whole team:** commit that same block as `.mcp.json` (Claude Code) or `.cursor/mcp.json` (Cursor) in each repo. Everyone who opens the project gets the server. Per repo, not per person.
+**Any other MCP client:** command `uvx`, argument `bugledger-mcp`, transport stdio.
 
-## How it works
+**Whole team:** commit that JSON as `.mcp.json` (Claude Code) or `.cursor/mcp.json` (Cursor) in the repo. Everyone who opens the project gets the server.
 
-| Tool | The agent calls it… | What it does |
-|---|---|---|
-| `get_patterns(feature_area, project)` | **before** planning or coding in an area | Newest past bugs for that area, one line each (`symptom → root cause`), capped at 30 lines |
-| `search_bugs(query)` | while debugging | Full-text search over symptoms and root causes. Paste the error; punctuation is ignored, best matches first |
-| `record_bug(...)` | after a fix, once you confirm | Stores symptom, root cause, feature area, project, stack, severity, and the fix diff (`git show <commit>` or an agent-supplied hunk) |
-| `list_areas()` | before naming things | Feature areas and projects already in the ledger, with counts, so names stay consistent |
-| `resolve_bug(id, project)` | once a project has a guardrail | Hides that bug from `get_patterns` for that project only |
-| `update_bug` / `delete_bug` | to correct mistakes | Edit or remove a record |
-| `get_guardrails(stack)` | at project setup | The starter pack of Semgrep rules plus the CI workflow to add |
+Restart the client. `/mcp` lists `bugledger` as connected and `/mcp__bugledger__logbug` is available.
 
-**`/logbug`** is an MCP prompt served by the server. It makes the agent check that the session really contained a bug fix, draft the record from the session, show it to you, and call `record_bug` only after you say yes. Feature work and refactors are refused.
+## Use
 
-The server also sends standing instructions to the agent on connect (call `get_patterns` before coding, `search_bugs` while debugging, `record_bug` after a confirmed fix), so it works without any extra setup. To make it a hard rule, add this to `CLAUDE.md` or `.cursorrules`:
+1. **Fix a bug as usual.**
+2. **Run `/mcp__bugledger__logbug`.** The agent checks that the session really contained a bug fix, drafts the symptom, root cause, feature area, and stack, shows you the draft, and stores it only after you say yes. Feature work and refactors are refused.
+3. **Keep working.** On connect, the server tells the agent to call `get_patterns` before coding and `search_bugs` while debugging. Nothing else to set up.
+
+To make the check a hard rule, add one line to `CLAUDE.md` or `.cursorrules`:
 
 ```
 Before implementing anything in a feature area, call bugledger get_patterns with that area and this project's name, and account for every returned bug. After fixing a bug, run /mcp__bugledger__logbug.
 ```
 
-## Guardrails: the Semgrep starter pack
+## Tools
 
-`get_guardrails` returns hand-written Semgrep rules for classic AI-coding mistakes: SQL and shell injection, hardcoded secrets, passwords in URLs, unsafe deserialization, `eval`, open CORS, debug mode, insecure random, empty catch blocks, plain-HTTP URLs. The agent writes them into `.bugledger/` in your repo and adds one new workflow file. Existing CI files are never touched.
+| Tool | Purpose |
+|---|---|
+| `get_patterns(feature_area, project)` | Past bugs for an area, one line each, capped at 30 lines |
+| `search_bugs(query)` | Full-text search over symptoms and root causes; paste the error as is |
+| `record_bug(...)` | Store a confirmed bug with its root cause and fix diff |
+| `list_areas()` | Existing feature areas and projects, so names stay consistent |
+| `update_bug` / `delete_bug` | Correct or remove a record |
+| `resolve_bug(id, project)` | Hide a bug from `get_patterns` for one project once a guardrail covers it |
+| `get_guardrails(stack)` | Starter Semgrep rules and the CI workflow that installs them |
 
-ERROR-severity rules block the pull request. WARNING rules are advisory: printed, never failing the build. Delete a rule's file to drop it. Every rule ships with its own known-bad fixture and is tested with `semgrep --test` in this repo's CI.
+## Guardrails
+
+`get_guardrails` returns hand-written Semgrep rules for the classic mistakes agents make: SQL and shell injection, hardcoded secrets, unsafe deserialization, `eval`, open CORS, debug mode, insecure random, plain HTTP. The agent writes them to `.bugledger/` in your repo and adds one workflow file. Existing CI files are never touched. ERROR rules block the pull request, WARNING rules only report. Delete a rule file to drop it.
 
 ## Data and privacy
 
-- The ledger is `~/.bugledger/ledger.db`. Override the folder with `BUGLEDGER_HOME`. Back it up or delete it freely; it is recreated on next start.
-- `record_bug` runs `git show <fix_ref>` in the server's working directory to store the fix diff locally. The diff is stored, never returned by `get_patterns`, and never sent anywhere.
-- No telemetry. The server makes no network calls.
+- The ledger is `~/.bugledger/ledger.db`. Set `BUGLEDGER_HOME` to move it. Delete it any time; it is recreated on next start.
+- `record_bug` runs `git show <commit>` locally to store the fix diff. Diffs are never returned by `get_patterns` and never leave your machine.
+- The server makes no network calls.
 
-## Development
+## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow. The short version:
-
-```sh
-cd python
-uv sync --group test
-uv run pytest                                  # unit + end-to-end over the MCP protocol
-uv run --group rules semgrep --test ../shared/rules --metrics=off   # rule pack self-test
-uv run bugledger-mcp                           # start the server (waits silently on stdin)
-```
-
-Register the dev checkout in Claude Code with `claude mcp add bugledger -- uv run --directory /abs/path/to/bugledger-mcp/python bugledger-mcp`.
-
-**Release:** bump `version` in `python/pyproject.toml`, then `python scripts/sync.py && cd python && uv build && uv publish`. Or publish a GitHub release; the `Publish` workflow does the same with the `PYPI_API_TOKEN` secret.
-
-## Repo layout
-
-```
-shared/      schema SQL · Semgrep rules + fixtures · /logbug prompt text (single source for every runtime)
-python/      canonical implementation → PyPI (uvx / pip)
-typescript/  npm port (npx), added after the Python server proves itself in daily use
-scripts/     sync.py copies shared/ into the package before a build
-artifacts/   diagrams and images
-```
+Bug reports, new rules, and pull requests are welcome. Setup, tests, and the release process are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
