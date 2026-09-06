@@ -43,9 +43,26 @@ claude mcp add bugledger -- uvx bugledger-mcp
 
 **Any other MCP client:** command `uvx`, argument `bugledger-mcp`, transport stdio.
 
+For copy-paste setup blocks for **Codex CLI, Windsurf, Zed, and Continue**, see
+[the MCP client setup guide](docs/setup.md).
+
 **Whole team:** commit that JSON as `.mcp.json` (Claude Code) or `.cursor/mcp.json` (Cursor) in the repo. Everyone who opens the project gets the server.
 
 Restart the client. `/mcp` lists `bugledger` as connected and `/mcp__bugledger__logbug` is available.
+
+### Troubleshooting
+
+- **Failed to connect:** run `uvx bugledger-mcp` in a terminal. A running
+  server waits silently for stdio input. If it exits, use the printed error to
+  fix the environment, then restart the MCP client.
+- **Stale `uvx` cache:** run `uvx --refresh bugledger-mcp`, then restart the
+  client.
+- **Python older than 3.10 on `PATH`:** check `python --version`. Bug Ledger
+  requires Python 3.10 or newer; `uvx --python 3.12 bugledger-mcp` selects a
+  compatible interpreter explicitly.
+- **Ledger location:** the default database is `~/.bugledger/ledger.db`. If
+  `BUGLEDGER_HOME` is set for the MCP server, the database is
+  `$BUGLEDGER_HOME/ledger.db` instead.
 
 ## Use
 
