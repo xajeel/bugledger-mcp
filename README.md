@@ -12,8 +12,6 @@
 
 <p align="center">
   <a href="https://pypi.org/project/bugledger-mcp/"><img alt="PyPI" src="https://img.shields.io/pypi/v/bugledger-mcp?color=6366F1"></a>
-  <a href="https://pypi.org/project/bugledger-mcp/"><img alt="Python" src="https://img.shields.io/pypi/pyversions/bugledger-mcp"></a>
-  <a href="https://github.com/xajeel/bugledger-mcp/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/xajeel/bugledger-mcp/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-14B8A6"></a>
 </p>
 
