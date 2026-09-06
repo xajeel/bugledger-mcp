@@ -2,7 +2,7 @@ from bugledger_mcp.utils.shared_files import read_shared_text
 
 
 def read_logbug_text():
-    """ Reads shared/logbug.md from the packaged copy or repo shared/. """
+    """Reads shared/logbug.md from the packaged copy or repo shared/."""
 
     return read_shared_text("logbug.md")
 
