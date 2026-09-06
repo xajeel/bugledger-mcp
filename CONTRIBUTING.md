@@ -8,6 +8,7 @@ Thanks for helping. This guide covers setup, how testing works here, the day-to-
 shared/      language-neutral truth: schema SQL, Semgrep rules + fixtures, the /logbug prompt
 python/      the server (canonical implementation) → PyPI
 scripts/     sync.py copies shared/ into the Python package before a build
+artifacts/   brand assets in artifacts/logo (mark, wordmark light/dark, app icon, PNG exports) and diagrams
 ```
 
 `python/` is the reference implementation. A future TypeScript port mirrors its code and tests, so keep behaviour in Python explicit and tested.
@@ -109,9 +110,13 @@ Rules are the product's free "wow" and also how it gets uninstalled if they are 
 
 ## Releasing (maintainers)
 
-1. Bump `version` in `python/pyproject.toml`; PyPI never accepts the same version twice.
-2. `python scripts/sync.py && cd python && uv build`, then `uvx --from dist/*.whl bugledger-mcp < /dev/null` as a smoke test.
-3. Publish a GitHub release with the tag `vX.Y.Z`. The `Publish` workflow builds and uploads with the `PYPI_API_TOKEN` secret. (Or `uv publish` by hand with a token.)
+The version is hand-edited in exactly one place: `version` in `python/pyproject.toml`. `python/uv.lock` mirrors it and everything else derives from it at runtime (`bugledger_mcp.__version__` reads the installed package metadata, which feeds the MCP `serverInfo.version` and the stderr startup line). PyPI never accepts the same version twice, so every release needs a bump.
+
+1. On a branch: `cd python && uv version --bump patch` (or `minor` / `major`). This updates `pyproject.toml` and `uv.lock` together. Commit as `chore(release): X.Y.Z`, open a PR, let CI pass, merge to `main`.
+2. Publish a GitHub release with tag `vX.Y.Z` targeting `main` (GitHub UI, or `gh release create vX.Y.Z --target main --generate-notes`). Publishing the release is the only trigger for the `Publish` workflow; pushes, tags alone, and manual runs never upload.
+3. The workflow refuses to continue if the tagged commit is not on `main` or the tag is not `v` + the pyproject version. Then it runs the tests, builds, checks the wheel, smoke-runs it, uploads with the `PYPI_API_TOKEN` repository secret, and finally installs `bugledger-mcp==X.Y.Z` from PyPI with `uvx` to prove the release is live.
+
+If step 3 fails before the upload, fix the cause, delete the release and tag, and publish again. If it fails after the upload (the PyPI verify step), the version is already taken: bump again.
 
 ## Reporting bugs
 
