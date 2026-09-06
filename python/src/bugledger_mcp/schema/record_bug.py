@@ -7,6 +7,22 @@ SEVERITY_VALUES, SOURCE_VALUES, MIN_ROOT_CAUSE_LEN = allowed_values()
 _, _, COMMIT_HASH_RE = diff_settings()
 
 
+def clean_slug(value):
+    """Lowercase, trimmed. Keeps 'Auth' and 'auth' in the same bucket."""
+    return value.strip().lower()
+
+
+def clean_stack(value):
+    if value is None:
+        return None
+    cleaned = []
+    for item in value:
+        item = item.strip().lower()
+        if item and item not in cleaned:
+            cleaned.append(item)
+    return cleaned or None
+
+
 class RecordBugSchema(BaseModel):
     symptom: str
     root_cause: str
@@ -18,6 +34,14 @@ class RecordBugSchema(BaseModel):
     diff_hunk: str | None = None
     source: str = "confirm"
 
+    @field_validator("symptom")
+    @classmethod
+    def check_symptom(cls, value):
+        value = value.strip()
+        if not value:
+            raise ValueError("symptom is required: what was observed before the fix.")
+        return value
+
     @field_validator("root_cause")
     @classmethod
     def check_root_cause(cls, value):
@@ -25,6 +49,27 @@ class RecordBugSchema(BaseModel):
         if len(value) < MIN_ROOT_CAUSE_LEN:
             raise ValueError(ROOT_CAUSE_TOO_SHORT)
         return value
+
+    @field_validator("feature_area")
+    @classmethod
+    def check_feature_area(cls, value):
+        value = clean_slug(value)
+        if not value:
+            raise ValueError("feature_area is required, e.g. auth or uploads.")
+        return value
+
+    @field_validator("project")
+    @classmethod
+    def check_project(cls, value):
+        value = clean_slug(value)
+        if not value:
+            raise ValueError("project is required: the repository or package name.")
+        return value
+
+    @field_validator("stack")
+    @classmethod
+    def check_stack(cls, value):
+        return clean_stack(value)
 
     @field_validator("severity")
     @classmethod

@@ -1,10 +1,10 @@
 import json
+from typing import Annotated
 
 from fastmcp.exceptions import ToolError
-from pydantic import ValidationError
+from pydantic import Field, ValidationError
 
-from bugledger_mcp.database import db
-from bugledger_mcp.database import repository
+from bugledger_mcp.database import db, repository
 from bugledger_mcp.schema.update_bug import UpdateBugSchema
 from bugledger_mcp.utils.constant import pattern_settings
 
@@ -12,19 +12,34 @@ _, _, _, _, _, UNKNOWN_RECORD = pattern_settings()
 
 
 def update_bug(
-    id: str,
-    symptom: str | None = None,
-    root_cause: str | None = None,
-    feature_area: str | None = None,
-    project: str | None = None,
-    stack: list[str] | None = None,
-    severity: str | None = None,
-    fix_ref: str | None = None,
-    diff_hunk: str | None = None,
+    id: Annotated[
+        str,
+        Field(
+            description=("Record id from get_patterns, search_bugs, or record_bug, e.g. rec_00042.")
+        ),
+    ],
+    symptom: str | None = Field(default=None, description="New symptom text."),
+    root_cause: str | None = Field(
+        default=None, description=("New root cause, at least 20 characters explaining WHY.")
+    ),
+    feature_area: str | None = Field(default=None, description="New feature area slug."),
+    project: str | None = Field(default=None, description="New project name."),
+    stack: list[str] | None = Field(
+        default=None, description=("New technology list, replaces the old one.")
+    ),
+    severity: str | None = Field(default=None, description="low, medium, or high."),
+    fix_ref: str | None = Field(
+        default=None, description=("Git commit hash of the fix, 7 to 40 hex chars.")
+    ),
+    diff_hunk: str | None = Field(
+        default=None,
+        description=(
+            "The fix diff. Use this when record_bug reported diff_source 'none' "
+            "and you have the change in front of you."
+        ),
+    ),
 ):
-    """Correct one or more fields on an existing bug record. Pass the record id
-    from get_patterns, search_bugs, or record_bug, plus only the fields that
-    changed — omitted fields are left as they are."""
+    """Correct one or more fields on an existing bug record. Pass only the fields that changed; omitted fields are left as they are."""
 
     try:
         data = UpdateBugSchema(
@@ -39,7 +54,7 @@ def update_bug(
             diff_hunk=diff_hunk,
         )
     except ValidationError as e:
-        raise ToolError(e.errors()[0]["msg"].removeprefix("Value error, "))
+        raise ToolError(e.errors()[0]["msg"].removeprefix("Value error, ")) from None
 
     conn = db.init_db()
     row = repository.get_bug(conn, data.id)
@@ -48,7 +63,15 @@ def update_bug(
         raise ToolError(UNKNOWN_RECORD)
 
     fields = {}
-    for name in ("symptom", "root_cause", "feature_area", "project", "severity", "fix_ref", "diff_hunk"):
+    for name in (
+        "symptom",
+        "root_cause",
+        "feature_area",
+        "project",
+        "severity",
+        "fix_ref",
+        "diff_hunk",
+    ):
         value = getattr(data, name)
         if value is not None:
             fields[name] = value

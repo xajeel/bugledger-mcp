@@ -1,5 +1,6 @@
 from pydantic import BaseModel, field_validator, model_validator
 
+from bugledger_mcp.schema.record_bug import clean_slug, clean_stack
 from bugledger_mcp.utils.constant import (
     allowed_values,
     diff_settings,
@@ -45,6 +46,14 @@ class UpdateBugSchema(BaseModel):
             raise ValueError(INVALID_RECORD_ID)
         return value
 
+    @field_validator("symptom")
+    @classmethod
+    def check_symptom(cls, value):
+        if value is None:
+            return None
+        value = value.strip()
+        return value or None
+
     @field_validator("root_cause")
     @classmethod
     def check_root_cause(cls, value):
@@ -54,6 +63,18 @@ class UpdateBugSchema(BaseModel):
         if len(value) < MIN_ROOT_CAUSE_LEN:
             raise ValueError(ROOT_CAUSE_TOO_SHORT)
         return value
+
+    @field_validator("feature_area", "project")
+    @classmethod
+    def check_slug(cls, value):
+        if value is None:
+            return None
+        return clean_slug(value) or None
+
+    @field_validator("stack")
+    @classmethod
+    def check_stack(cls, value):
+        return clean_stack(value)
 
     @field_validator("severity")
     @classmethod

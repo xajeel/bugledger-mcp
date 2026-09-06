@@ -1,5 +1,6 @@
 from pydantic import BaseModel, field_validator
 
+from bugledger_mcp.schema.record_bug import clean_slug
 from bugledger_mcp.utils.constant import pattern_settings
 
 (
@@ -20,7 +21,7 @@ class GetPatternsSchema(BaseModel):
     @field_validator("feature_area")
     @classmethod
     def check_feature_area(cls, value):
-        value = value.strip()
+        value = clean_slug(value)
         if not value:
             raise ValueError(EMPTY_FEATURE_AREA)
         return value
@@ -28,7 +29,7 @@ class GetPatternsSchema(BaseModel):
     @field_validator("project")
     @classmethod
     def check_project(cls, value):
-        value = value.strip()
+        value = clean_slug(value)
         if not value:
             raise ValueError(EMPTY_PROJECT)
         return value
