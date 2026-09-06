@@ -1,5 +1,9 @@
 name: Publish
 
+# Runs only when a GitHub release is published. Nothing else uploads to PyPI:
+# no push, no tag alone, no manual trigger. The guards below refuse a release
+# whose tag does not match the package version or whose commit is not on main.
+
 on:
   release:
     types: [published]
@@ -16,8 +20,33 @@ jobs:
         working-directory: python
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history: the "on main" guard needs it
 
       - uses: astral-sh/setup-uv@v6
+
+      - name: Guard - release commit must be on main
+        run: |
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::Release commit $GITHUB_SHA is not on main. Release from main only."
+            exit 1
+          fi
+
+      - name: Guard - release tag must match python/pyproject.toml version
+        run: |
+          tag="${{ github.event.release.tag_name }}"
+          version="$(uv version --short)"
+          if [ "$tag" != "v$version" ]; then
+            echo "::error::Release tag is '$tag' but pyproject.toml says '$version'. Expected tag 'v$version'. Bump with: cd python && uv version --bump patch"
+            exit 1
+          fi
+          echo "Releasing bugledger-mcp $version"
+
+      - name: Lockfile matches pyproject (fails if uv.lock was not updated with the bump)
+        run: uv sync --locked --group test
+
+      - run: uv run --locked pytest -q
 
       - run: python ../scripts/sync.py
 
@@ -28,6 +57,8 @@ jobs:
           unzip -l dist/*.whl | tee /tmp/wheel.txt
           grep -q "bugledger_mcp/shared/schema/001_init.sql" /tmp/wheel.txt
           grep -q "bugledger_mcp/shared/logbug.md" /tmp/wheel.txt
+          grep -q "bugledger_mcp/shared/rules/hardcoded-secret.yaml" /tmp/wheel.txt
+          grep -qi "licenses/LICENSE" /tmp/wheel.txt
 
       - name: Installed wheel starts and creates the ledger
         run: |
@@ -35,6 +66,24 @@ jobs:
           timeout 30 uvx --from dist/*.whl bugledger-mcp < /dev/null
           test -f /tmp/bugledger-smoke/ledger.db
 
-      - run: uv publish
+      - name: Upload to PyPI
+        run: uv publish
         env:
           UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+
+      - name: Verify the release installs from PyPI
+        run: |
+          version="$(uv version --short)"
+          export BUGLEDGER_HOME=/tmp/bugledger-pypi
+          for attempt in 1 2 3 4 5 6; do
+            if timeout 60 uvx --refresh --isolated "bugledger-mcp==$version" < /dev/null \
+               && test -f /tmp/bugledger-pypi/ledger.db; then
+              echo "bugledger-mcp $version installs from PyPI"
+              exit 0
+            fi
+            echo "PyPI has not served $version yet (attempt $attempt), retrying in 20s"
+            rm -rf /tmp/bugledger-pypi
+            sleep 20
+          done
+          echo "::error::Could not install bugledger-mcp==$version from PyPI after upload"
+          exit 1
