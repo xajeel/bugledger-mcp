@@ -1,6 +1,3 @@
-import sqlite3
-from pathlib import Path
-
 import pytest
 from pydantic import ValidationError
 
@@ -8,16 +5,13 @@ from bugledger_mcp.database import repository
 from bugledger_mcp.schema.get_patterns import GetPatternsSchema
 from bugledger_mcp.tools.get_patterns import format_pattern_line
 from bugledger_mcp.utils.constant import pattern_settings
+from helpers import memory_db as apply_schema
 
-SCHEMA_DIR = Path(__file__).resolve().parents[2] / "shared" / "schema"
 _, MAX_LINES, _, _, _, _ = pattern_settings()
 
 
 def memory_db():
-    conn = sqlite3.connect(":memory:")
-    conn.executescript((SCHEMA_DIR / "001_init.sql").read_text())
-    conn.executescript((SCHEMA_DIR / "002_fts.sql").read_text())
-    conn.executescript((SCHEMA_DIR / "003_resolutions.sql").read_text())
+    conn = apply_schema()
     repository.insert_bug(
         conn,
         "rec_00001",
