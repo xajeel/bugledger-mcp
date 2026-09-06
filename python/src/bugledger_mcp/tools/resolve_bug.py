@@ -1,24 +1,33 @@
 from datetime import datetime, timezone
+from typing import Annotated
 
 from fastmcp.exceptions import ToolError
-from pydantic import ValidationError
+from pydantic import Field, ValidationError
 
-from bugledger_mcp.database import db
-from bugledger_mcp.database import repository
+from bugledger_mcp.database import db, repository
 from bugledger_mcp.schema.resolve_bug import ResolveBugSchema
 from bugledger_mcp.utils.constant import pattern_settings
 
 _, _, _, _, _, UNKNOWN_RECORD = pattern_settings()
 
 
-def resolve_bug(id: str, project: str):
-    """Mark a bug resolved for one project after a test or fix exists there. 
-    Other projects still see it in get_patterns and search until they resolve it too."""
+def resolve_bug(
+    id: Annotated[
+        str,
+        Field(
+            description=("Record id from get_patterns, search_bugs, or record_bug, e.g. rec_00042.")
+        ),
+    ],
+    project: Annotated[
+        str, Field(description=("The project that now has a guardrail for this bug."))
+    ],
+):
+    """Hide a bug from get_patterns for one project because that project now guards against it: a regression test, a Semgrep rule, or the fix itself is in place. Other projects still see the bug, and search_bugs finds it everywhere."""
 
     try:
         data = ResolveBugSchema(id=id, project=project)
     except ValidationError as e:
-        raise ToolError(e.errors()[0]["msg"].removeprefix("Value error, "))
+        raise ToolError(e.errors()[0]["msg"].removeprefix("Value error, ")) from None
 
     conn = db.init_db()
     row = repository.get_bug(conn, data.id)
@@ -34,10 +43,7 @@ def resolve_bug(id: str, project: str):
     )
     conn.close()
 
-    if inserted == 0:
-        status = "already_resolved"
-    else:
-        status = "resolved"
+    status = "resolved" if inserted else "already_resolved"
 
     return {
         "id": data.id,

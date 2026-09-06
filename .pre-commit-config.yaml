@@ -1,0 +1,24 @@
+# Local hooks: lint + format on every commit, the test suite before every push.
+# Install once, from the repo root:
+#   uvx pre-commit install
+# Run everything by hand:
+#   uvx pre-commit run --all-files --hook-stage pre-push
+default_install_hook_types: [pre-commit, pre-push]
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.6
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest (python/)
+        entry: uv run --directory python --group test pytest -q
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]

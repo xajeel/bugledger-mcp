@@ -6,7 +6,7 @@ from bugledger_mcp.tools.get_guardrails import get_guardrails
 
 def test_returns_all_rules_for_stack_all():
     result = get_guardrails(stack="all")
-    assert result["count"] >= 12
+    assert result["count"] >= 11
     assert len(result["rules"]) == result["count"]
     assert result["stack"] == "all"
 

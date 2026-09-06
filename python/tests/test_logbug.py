@@ -1,7 +1,7 @@
 import asyncio
 
 from bugledger_mcp.prompts.logbug import logbug, read_logbug_text
-from bugledger_mcp.tool_registery import bugledger_mcp
+from bugledger_mcp.tool_registry import bugledger_mcp
 
 
 def test_logbug_text_tells_the_agent_to_wait():

@@ -209,6 +209,9 @@ tempCodeRunnerFile.py
 # PyPI configuration file
 .pypirc
 
+# Synced copy of shared/ for packaging only (source is repo-root shared/)
+python/src/bugledger_mcp/shared/
+
 # Marimo
 marimo/_static/
 marimo/_lsp/
@@ -216,3 +219,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# One-off commit helper scripts (run, then delete)
+scripts/commit-*.sh

@@ -1,21 +1,15 @@
 import json
-import sqlite3
-from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
 from bugledger_mcp.database import repository
 from bugledger_mcp.schema.update_bug import UpdateBugSchema
-
-SCHEMA_DIR = Path(__file__).resolve().parents[2] / "shared" / "schema"
+from helpers import memory_db as apply_schema
 
 
 def memory_db():
-    conn = sqlite3.connect(":memory:")
-    conn.executescript((SCHEMA_DIR / "001_init.sql").read_text())
-    conn.executescript((SCHEMA_DIR / "002_fts.sql").read_text())
-    conn.executescript((SCHEMA_DIR / "003_resolutions.sql").read_text())
+    conn = apply_schema()
     repository.insert_bug(
         conn,
         "rec_00001",
@@ -97,8 +91,6 @@ def test_update_keeps_fts_in_sync():
 def test_update_stack_stores_json():
     conn = memory_db()
     repository.update_bug(conn, "rec_00001", {"stack": json.dumps(["python", "sqlite"])})
-    row = conn.execute(
-        "SELECT stack FROM bug_records WHERE id = ?", ("rec_00001",)
-    ).fetchone()
+    row = conn.execute("SELECT stack FROM bug_records WHERE id = ?", ("rec_00001",)).fetchone()
     conn.close()
     assert json.loads(row[0]) == ["python", "sqlite"]

@@ -20,8 +20,14 @@ rules:
       switches between HTTP and HTTPS based on the environment.
     patterns:
       - pattern-regex: 'http://[a-zA-Z0-9]'
+      # Local and private addresses.
       - pattern-not-regex: 'http://(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|10\.\d|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)'
-      - pattern-not-regex: 'http://(example\.com|example\.org|example\.net)'
+      # Documentation and placeholder hosts.
+      - pattern-not-regex: '(?i)http://([a-z0-9.-]+\.)?(example\.(com|org|net)|test|localhost|local|internal|host|hostname|server|server-url)\b'
+      # XML namespaces, schema identifiers, and license links are identifiers, not requests.
+      - pattern-not-regex: 'http://(www\.w3\.org|schemas\.|xmlns\.|purl\.org|www\.gnu\.org|(www\.)?apache\.org|json-schema\.org|ns\.adobe\.com|creativecommons\.org|(www\.)?xml\.org|openoffice\.org|www\.opengis\.net|schema\.org|maven\.apache\.org|oauth\.net)'
+      # A host without a dot (http://testserver, http://api/) is never a public production host.
+      - pattern-not-regex: 'http://[A-Za-z0-9_-]+([/"''`\s)>,;]|$)'
     metadata:
       category: security
       cwe: "CWE-319: Cleartext Transmission of Sensitive Information"

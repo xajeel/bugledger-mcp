@@ -1,0 +1,26 @@
+# Lint and format settings for the whole repo (python/ and scripts/).
+# Run:  uvx ruff check . && uvx ruff format .   (the pre-commit hook does this)
+target-version = "py310"
+line-length = 100
+extend-exclude = [
+    "shared",                          # Semgrep rule fixtures are deliberately bad code
+    "python/src/bugledger_mcp/shared", # synced copy of the above
+]
+
+[lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # import order
+    "UP",  # modern Python syntax for the target version
+    "B",   # common bug patterns
+]
+ignore = [
+    "E501", # line length is handled by the formatter; long strings are fine
+]
+
+[lint.isort]
+known-first-party = ["bugledger_mcp", "helpers"]
+
+[lint.flake8-bugbear]
+extend-immutable-calls = ["pydantic.Field"]

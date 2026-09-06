@@ -1,20 +1,13 @@
-import sqlite3
-from pathlib import Path
-
 import pytest
 from pydantic import ValidationError
 
 from bugledger_mcp.database import repository
 from bugledger_mcp.schema.delete_bug import DeleteBugSchema
-
-SCHEMA_DIR = Path(__file__).resolve().parents[2] / "shared" / "schema"
+from helpers import memory_db as apply_schema
 
 
 def memory_db():
-    conn = sqlite3.connect(":memory:")
-    conn.executescript((SCHEMA_DIR / "001_init.sql").read_text())
-    conn.executescript((SCHEMA_DIR / "002_fts.sql").read_text())
-    conn.executescript((SCHEMA_DIR / "003_resolutions.sql").read_text())
+    conn = apply_schema()
     repository.insert_bug(
         conn,
         "rec_00001",

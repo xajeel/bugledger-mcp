@@ -1,0 +1,40 @@
+name: Publish
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  publish-pypi:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: python
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - run: python ../scripts/sync.py
+
+      - run: uv build
+
+      - name: Wheel contains the shared files
+        run: |
+          unzip -l dist/*.whl | tee /tmp/wheel.txt
+          grep -q "bugledger_mcp/shared/schema/001_init.sql" /tmp/wheel.txt
+          grep -q "bugledger_mcp/shared/logbug.md" /tmp/wheel.txt
+
+      - name: Installed wheel starts and creates the ledger
+        run: |
+          export BUGLEDGER_HOME=/tmp/bugledger-smoke
+          timeout 30 uvx --from dist/*.whl bugledger-mcp < /dev/null
+          test -f /tmp/bugledger-smoke/ledger.db
+
+      - run: uv publish
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}

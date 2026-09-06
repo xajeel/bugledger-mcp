@@ -6,16 +6,33 @@ rules:
     message: >
       Empty except block silently swallows errors. At minimum log the
       exception. Silenced errors hide bugs and make debugging impossible.
-    pattern-either:
-      - pattern: |
+    patterns:
+      - pattern-either:
+          - pattern: |
+              try:
+                  ...
+              except:
+                  pass
+          - pattern: |
+              try:
+                  ...
+              except $E:
+                  pass
+      # Idiomatic optional-import and cancellation handling are not bugs.
+      - pattern-not: |
           try:
               ...
-          except:
+          except ImportError:
               pass
-      - pattern: |
+      - pattern-not: |
           try:
               ...
-          except $E:
+          except ModuleNotFoundError:
+              pass
+      - pattern-not: |
+          try:
+              ...
+          except asyncio.CancelledError:
               pass
     metadata:
       category: reliability

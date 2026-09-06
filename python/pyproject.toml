@@ -1,19 +1,85 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
 [project]
 name = "bugledger-mcp"
 version = "0.1.0"
-description = "A local-first Model Context Protocol (MCP) server for tracking, searching, and preventing recurring software bugs."
+description = "Local-first MCP server that gives AI coding agents a memory of fixed bugs: record at fix time, retrieve before coding, search while debugging, enforce with Semgrep."
 readme = "README.md"
-requires-python = ">=3.14"
-dependencies = [
-    "fastmcp>=3.4.7",
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [
+    { name = "xajeel" },
 ]
+keywords = [
+    "mcp",
+    "model-context-protocol",
+    "claude-code",
+    "cursor",
+    "ai-agents",
+    "bugs",
+    "regression",
+    "semgrep",
+    "sqlite",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Debuggers",
+]
+dependencies = [
+    "fastmcp>=3.4.7,<4",
+]
+
+[project.urls]
+Homepage = "https://github.com/xajeel/bugledger-mcp"
+Repository = "https://github.com/xajeel/bugledger-mcp"
+Issues = "https://github.com/xajeel/bugledger-mcp/issues"
+
+[project.scripts]
+bugledger-mcp = "bugledger_mcp.mcp_server:main"
 
 [dependency-groups]
 test = [
     "pytest>=8",
 ]
+dev = [
+    { include-group = "test" },
+    "ruff>=0.16",
+]
 rules = [
     "semgrep>=1.174.0",
+]
+
+[tool.hatch.build]
+ignore-vcs = true
+exclude = [
+    "**/__pycache__",
+    "**/*.pyc",
+    "**/.gitkeep",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bugledger_mcp"]
+
+[tool.hatch.build.targets.sdist]
+only-include = [
+    "src/bugledger_mcp",
+    "tests",
+    "README.md",
+    "LICENSE",
+    "pyproject.toml",
 ]
 
 [tool.pytest.ini_options]

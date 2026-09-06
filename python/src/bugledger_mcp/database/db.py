@@ -1,62 +1,38 @@
-import sqlite3
 import os
 import sqlite3
-import importlib.resources
 import sys
 from pathlib import Path
 
-def get_db_path() -> Path:
+from bugledger_mcp.utils.shared_files import list_shared_files
 
-    """ Returns the absolute path to the ledger database file. 
-        respects BUGLEDGER_HOME env var and creates the
-        parent directory if it doesn't exist.
-    """
+
+def get_db_path() -> Path:
+    """Path of the ledger database. Honors BUGLEDGER_HOME, defaults to ~/.bugledger/."""
 
     custom_home = os.getenv("BUGLEDGER_HOME")
-    if custom_home: 
-        base_dir = Path(custom_home)
-    else:
-        base_dir = Path.home() / ".bugledger"
-
+    base_dir = Path(custom_home) if custom_home else Path.home() / ".bugledger"
     base_dir.mkdir(parents=True, exist_ok=True)
     return base_dir / "ledger.db"
 
 
 def run_migrations(conn: sqlite3.Connection) -> None:
-    """ Runs all the migration scripts in the schema directory. """
+    """Apply every shared/schema/*.sql file newer than PRAGMA user_version, in name order."""
 
-    schema_dir = importlib.resources.files("bugledger_mcp.shared.schema")
     cursor = conn.cursor()
     user_version = cursor.execute("PRAGMA user_version;").fetchone()[0]
-    sql_files = []
+    sql_files = sorted(list_shared_files("schema", suffix=".sql"), key=lambda f: f.name)
 
-    for file in schema_dir.iterdir():
-        if file.name.endswith(".sql") and file.name:
-            sql_files.append(file)
-    
-    sorted_sql_files = sorted(sql_files)
-
-    for index, sql_file in enumerate(sorted_sql_files, start=1):
+    for index, sql_file in enumerate(sql_files, start=1):
         if index > user_version:
-            print(f"MIGRATE :> {sql_file.name}", file=sys.stderr)
-            file_content = sql_file.read_text(encoding="utf-8")
-            cursor.executescript(file_content)
+            print(f"bugledger-mcp: applying migration {sql_file.name}", file=sys.stderr)
+            cursor.executescript(sql_file.read_text(encoding="utf-8"))
             cursor.execute(f"PRAGMA user_version={index}")
             conn.commit()
 
-def init_db():
-    """ Initializes the database connection. """
 
-    database_path = get_db_path()
-    conn = sqlite3.connect(database_path)
+def init_db() -> sqlite3.Connection:
+    """Open the ledger, creating the file and applying migrations if needed."""
+
+    conn = sqlite3.connect(get_db_path(), timeout=10)
     run_migrations(conn)
     return conn
-
-if __name__ == "__main__":
-    conn = init_db()
-    version = conn.execute("PRAGMA user_version").fetchone()[0]
-    print(f"Current migration version: {version}")
-    conn.close()
-
-
-    

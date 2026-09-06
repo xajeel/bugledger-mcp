@@ -1,14 +1,10 @@
-from pathlib import Path
+from bugledger_mcp.utils.shared_files import read_shared_text
 
 
 def read_logbug_text():
-    """ Reads shared/logbug.md from the repo or the packaged copy. """
+    """Reads shared/logbug.md from the packaged copy or repo shared/."""
 
-    for parent in Path(__file__).resolve().parents:
-        path = parent / "shared" / "logbug.md"
-        if path.is_file():
-            return path.read_text(encoding="utf-8")
-    raise FileNotFoundError("shared/logbug.md not found")
+    return read_shared_text("logbug.md")
 
 
 def logbug():

@@ -6,8 +6,33 @@ on:
     branches: [main]
 
 jobs:
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uvx ruff@0.16.6 check .
+      - run: uvx ruff@0.16.6 format --check .
+
   python-tests:
-    name: Python tests
+    name: Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+    defaults:
+      run:
+        working-directory: python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --group test --python ${{ matrix.python }}
+      - run: uv run --python ${{ matrix.python }} pytest
+
+  rule-pack:
+    name: Semgrep rule pack
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -15,5 +40,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - run: uv sync --group test
-      - run: uv run pytest
+      - run: uv run --group rules semgrep --validate --config ../shared/rules --metrics=off
+      - run: uv run --group rules semgrep --test ../shared/rules --metrics=off
+
+  package-build:
+    name: Package build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: python ../scripts/sync.py
+      - run: uv build
+      - name: Wheel contains the shared files
+        run: |
+          unzip -l dist/*.whl | tee /tmp/wheel.txt
+          grep -q "bugledger_mcp/shared/schema/001_init.sql" /tmp/wheel.txt
+          grep -q "bugledger_mcp/shared/logbug.md" /tmp/wheel.txt
+          grep -q "bugledger_mcp/shared/rules/hardcoded-secret.yaml" /tmp/wheel.txt
+          grep -qi "licenses/LICENSE" /tmp/wheel.txt
+      - name: Installed wheel starts and creates the ledger
+        run: |
+          export BUGLEDGER_HOME=/tmp/bugledger-smoke
+          timeout 30 uvx --from dist/*.whl bugledger-mcp < /dev/null
+          test -f /tmp/bugledger-smoke/ledger.db

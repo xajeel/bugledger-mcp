@@ -1,5 +1,7 @@
 from pydantic import BaseModel, field_validator
 
+from bugledger_mcp.schema.record_bug import clean_slug
+
 
 class SearchBugsSchema(BaseModel):
     query: str
@@ -14,6 +16,6 @@ class SearchBugsSchema(BaseModel):
     @field_validator("feature_area", "project")
     @classmethod
     def strip_optional(cls, value):
-        if value is None or value == "":
+        if value is None:
             return None
-        return value.strip()
+        return clean_slug(value) or None
