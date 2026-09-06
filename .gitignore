@@ -219,3 +219,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# One-off commit helper scripts (run, then delete)
+scripts/commit-*.sh
