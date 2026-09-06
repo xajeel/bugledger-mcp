@@ -48,7 +48,7 @@ Use what was said, shown, logged, or changed in this conversation. Do not invent
 - Good: "email was used as a path segment; `+` was not percent-encoded so the router split the address"
 - Bad: "fixed encoding", "null pointer", "edge case"
 
-**feature_area** — short stable slug for later lookup (`auth`, `uploads`, `billing`). Lowercase, one or two tokens. Not a sentence. Match how this repo names the area.
+**feature_area** — short stable slug for later lookup (`auth`, `uploads`, `billing`). Lowercase, one or two tokens. Not a sentence. Call `list_areas` once and reuse an existing slug when one fits; a new slug means future `get_patterns` calls for the old slug will miss this record.
 
 **project** — the repo / project you were working in (directory or package name). Required by `record_bug`.
 
@@ -107,4 +107,6 @@ Only after an explicit yes.
 - After a successful call, show the returned `id` to the user. That is the only id they should copy later.
 - If the tool errors, fix the fields using the error text and retry the same call. Do not invent an id. Do not switch `source`.
 
-Do not call `resolve_bug`, `search_bugs`, or `get_patterns` as part of this ritual unless the user asks.
+- If the result says `diff_source` is `none` and the fix is visible in this session, call `update_bug` with the `diff_hunk` so the record keeps the actual change.
+
+Do not call `resolve_bug`, `search_bugs`, or `get_patterns` as part of this ritual unless the user asks. Calling `list_areas` to pick the `feature_area` slug is fine.
