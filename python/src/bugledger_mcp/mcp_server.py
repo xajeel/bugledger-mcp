@@ -1,3 +1,4 @@
+import argparse
 import sys
 
 from fastmcp import FastMCP
@@ -21,6 +22,13 @@ mcp = FastMCP("bugledger", instructions=INSTRUCTIONS, version=__version__)
 
 
 def main():
+    parser = argparse.ArgumentParser(
+        prog="bugledger-mcp",
+        description="Run the Bug Ledger MCP stdio server. Set BUGLEDGER_HOME to change the ledger directory.",
+    )
+    parser.add_argument("--version", action="version", version=f"bugledger-mcp {__version__}")
+    parser.parse_args()
+
     import bugledger_mcp.tool_registry  # noqa: F401  (registers tools and the prompt)
     from bugledger_mcp.database import db
 
