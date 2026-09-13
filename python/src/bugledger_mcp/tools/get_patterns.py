@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastmcp.exceptions import ToolError
 from pydantic import Field, ValidationError
+from pydantic.fields import FieldInfo
 
 from bugledger_mcp.database import db, repository
 from bugledger_mcp.schema.get_patterns import GetPatternsSchema
@@ -31,16 +32,29 @@ def get_patterns(
             )
         ),
     ],
+    stack: str | None = Field(
+        default=None,
+        description=(
+            "Optional technology to filter by, e.g. python, react. "
+            "Only bugs matching this technology stack are returned."
+        ),
+    ),
     limit: int | None = Field(
         default=None, description=("Maximum records to return, 1 to 30. Default 15.")
     ),
 ):
     """Call this BEFORE planning, writing specs, or implementing anything in a feature area. Returns the newest past bugs for that area, one line each (symptom → root cause), capped at 30 lines. Account for every line in your plan. Bugs resolved for this project are hidden; search_bugs still finds them."""
 
+    if isinstance(stack, FieldInfo):
+        stack = None
+    if isinstance(limit, FieldInfo):
+        limit = None
+
     try:
         data = GetPatternsSchema(
             feature_area=feature_area,
             project=project,
+            stack=stack,
             limit=limit,
         )
     except ValidationError as e:
@@ -52,6 +66,7 @@ def get_patterns(
         data.feature_area,
         data.project,
         data.limit,
+        data.stack,
     )
     conn.close()
 
@@ -64,10 +79,13 @@ def get_patterns(
         older = total - len(lines)
         lines.append(f"+{older} older records: use search_bugs to dig")
 
-    return {
+    result = {
         "feature_area": data.feature_area,
         "project": data.project,
         "count": len(rows),
         "truncated": truncated,
         "lines": lines,
     }
+    if data.stack is not None:
+        result["stack"] = data.stack
+    return result

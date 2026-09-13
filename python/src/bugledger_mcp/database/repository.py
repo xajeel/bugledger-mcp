@@ -81,32 +81,41 @@ def delete_bug(conn, record_id):
     return cursor.rowcount
 
 
-def get_patterns(conn, feature_area, project, limit):
-    """Newest records for a feature area, skipping ones resolved for this project."""
+def get_patterns(conn, feature_area, project, limit, stack=None):
+    """Newest records for a feature area, skipping ones resolved for this project,
+    optionally filtered by technology stack."""
 
     cursor = conn.cursor()
-    total = cursor.execute(
-        """
-        SELECT COUNT(*) FROM bug_records
+    base_where = """
         WHERE feature_area = ?
         AND id NOT IN (
             SELECT record_id FROM bug_resolutions WHERE project = ?
         )
-        """,
-        (feature_area, project),
+    """
+    params = [feature_area, project]
+    if stack is not None:
+        base_where += """
+        AND stack IS NOT NULL
+        AND EXISTS (
+            SELECT 1 FROM json_each(bug_records.stack)
+            WHERE LOWER(json_each.value) = ?
+        )
+        """
+        params.append(stack.lower())
+
+    total = cursor.execute(
+        f"SELECT COUNT(*) FROM bug_records {base_where}",
+        params,
     ).fetchone()[0]
     rows = cursor.execute(
-        """
+        f"""
         SELECT id, symptom, root_cause, project, created_at
         FROM bug_records
-        WHERE feature_area = ?
-        AND id NOT IN (
-            SELECT record_id FROM bug_resolutions WHERE project = ?
-        )
+        {base_where}
         ORDER BY created_at DESC, id DESC
         LIMIT ?
         """,
-        (feature_area, project, limit),
+        params + [limit],
     ).fetchall()
     return rows, total
 

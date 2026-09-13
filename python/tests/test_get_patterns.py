@@ -1,9 +1,11 @@
+import json
+
 import pytest
 from pydantic import ValidationError
 
 from bugledger_mcp.database import repository
 from bugledger_mcp.schema.get_patterns import GetPatternsSchema
-from bugledger_mcp.tools.get_patterns import format_pattern_line
+from bugledger_mcp.tools.get_patterns import format_pattern_line, get_patterns
 from bugledger_mcp.utils.constant import pattern_settings
 from helpers import memory_db as apply_schema
 
@@ -143,3 +145,130 @@ def test_search_still_finds_a_resolved_bug():
     conn.close()
     assert len(hits) == 1
     assert hits[0]["id"] == "rec_00001"
+
+
+def test_stack_is_lowercased_and_trimmed():
+    data = GetPatternsSchema(feature_area="auth", project="shop-app", stack="  Python  ")
+    assert data.stack == "python"
+
+
+def test_empty_or_whitespace_stack_becomes_none():
+    assert GetPatternsSchema(feature_area="auth", project="shop-app", stack="").stack is None
+    assert GetPatternsSchema(feature_area="auth", project="shop-app", stack="   ").stack is None
+    assert GetPatternsSchema(feature_area="auth", project="shop-app", stack=None).stack is None
+
+
+def test_filter_by_stack_in_repository():
+    conn = apply_schema()
+    repository.insert_bug(
+        conn,
+        "rec_00010",
+        "shop-app",
+        "sym1",
+        "root cause 1 with enough characters",
+        "auth",
+        json.dumps(["python", "fastapi"]),
+        "high",
+        None,
+        None,
+        "confirm",
+        "2026-08-01T00:00:00Z",
+    )
+    repository.insert_bug(
+        conn,
+        "rec_00011",
+        "shop-app",
+        "sym2",
+        "root cause 2 with enough characters",
+        "auth",
+        json.dumps(["react", "typescript"]),
+        "medium",
+        None,
+        None,
+        "confirm",
+        "2026-08-02T00:00:00Z",
+    )
+    repository.insert_bug(
+        conn,
+        "rec_00012",
+        "shop-app",
+        "sym3",
+        "root cause 3 with enough characters",
+        "auth",
+        None,
+        "low",
+        None,
+        None,
+        "confirm",
+        "2026-08-03T00:00:00Z",
+    )
+
+    rows_py, total_py = repository.get_patterns(conn, "auth", "shop-app", 10, stack="python")
+    assert total_py == 1
+    assert rows_py[0][0] == "rec_00010"
+
+    rows_py_upper, total_py_upper = repository.get_patterns(
+        conn, "auth", "shop-app", 10, stack="PYTHON"
+    )
+    assert total_py_upper == 1
+    assert rows_py_upper[0][0] == "rec_00010"
+
+    rows_react, total_react = repository.get_patterns(conn, "auth", "shop-app", 10, stack="react")
+    assert total_react == 1
+    assert rows_react[0][0] == "rec_00011"
+
+    rows_go, total_go = repository.get_patterns(conn, "auth", "shop-app", 10, stack="go")
+    assert total_go == 0
+    assert rows_go == []
+
+    rows_all, total_all = repository.get_patterns(conn, "auth", "shop-app", 10, stack=None)
+    assert total_all == 3
+    assert len(rows_all) == 3
+
+    conn.close()
+
+
+def test_tool_get_patterns_with_stack(monkeypatch, tmp_path):
+    monkeypatch.setenv("BUGLEDGER_HOME", str(tmp_path))
+    from bugledger_mcp.database import db
+
+    conn = db.init_db()
+    repository.insert_bug(
+        conn,
+        "rec_00010",
+        "shop-app",
+        "sym1",
+        "root cause 1 with enough characters",
+        "auth",
+        json.dumps(["python", "fastapi"]),
+        "high",
+        None,
+        None,
+        "confirm",
+        "2026-08-01T00:00:00Z",
+    )
+    repository.insert_bug(
+        conn,
+        "rec_00011",
+        "shop-app",
+        "sym2",
+        "root cause 2 with enough characters",
+        "auth",
+        json.dumps(["react", "typescript"]),
+        "medium",
+        None,
+        None,
+        "confirm",
+        "2026-08-02T00:00:00Z",
+    )
+    conn.close()
+
+    res = get_patterns(feature_area="auth", project="shop-app", stack="python")
+    assert res["count"] == 1
+    assert res["stack"] == "python"
+    assert len(res["lines"]) == 1
+    assert "rec_00010" in res["lines"][0]
+
+    res_unfiltered = get_patterns(feature_area="auth", project="shop-app")
+    assert res_unfiltered["count"] == 2
+    assert "stack" not in res_unfiltered

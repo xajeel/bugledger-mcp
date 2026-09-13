@@ -16,6 +16,7 @@ from bugledger_mcp.utils.constant import pattern_settings
 class GetPatternsSchema(BaseModel):
     feature_area: str
     project: str
+    stack: str | None = None
     limit: int | None = None
 
     @field_validator("feature_area")
@@ -33,6 +34,13 @@ class GetPatternsSchema(BaseModel):
         if not value:
             raise ValueError(EMPTY_PROJECT)
         return value
+
+    @field_validator("stack")
+    @classmethod
+    def check_stack(cls, value):
+        if value is None or value.strip() == "":
+            return None
+        return clean_slug(value)
 
     @field_validator("limit")
     @classmethod
