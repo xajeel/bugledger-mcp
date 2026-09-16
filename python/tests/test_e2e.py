@@ -70,6 +70,9 @@ def test_handshake_exposes_tools_prompt_and_instructions(ledger):
     props = tools["record_bug"].inputSchema["properties"]
     assert "WHY" in props["root_cause"]["description"]
     assert props["severity"]["description"].startswith("low, medium, or high")
+    pattern_props = tools["get_patterns"].inputSchema["properties"]
+    assert "stack" in pattern_props
+    assert "filter" in pattern_props["stack"]["description"]
 
 
 def test_logbug_prompt_returns_the_ritual(ledger):
@@ -95,6 +98,12 @@ def test_full_ledger_lifecycle(ledger):
             )
             out["patterns_other_case"] = await call(
                 client, "get_patterns", feature_area="AUTH", project="Shop-App"
+            )
+            out["patterns_stack_match"] = await call(
+                client, "get_patterns", feature_area="auth", project="shop-app", stack="fastapi"
+            )
+            out["patterns_stack_mismatch"] = await call(
+                client, "get_patterns", feature_area="auth", project="shop-app", stack="ruby"
             )
             out["search"] = await call(client, "search_bugs", query="HTTP 500: plus-sign in e-mail")
             out["resolved"] = await call(
@@ -139,6 +148,10 @@ def test_full_ledger_lifecycle(ledger):
     assert "percent-encoded" in out["patterns"]["lines"][0]
     assert "quote(email)" not in json.dumps(out["patterns"])  # diff never leaks into patterns
     assert out["patterns_other_case"]["lines"] == out["patterns"]["lines"]
+    assert out["patterns_stack_match"]["count"] == 1
+    assert out["patterns_stack_match"]["stack"] == "fastapi"
+    assert out["patterns_stack_mismatch"]["count"] == 0
+    assert out["patterns_stack_mismatch"]["lines"] == []
 
     assert out["search"]["count"] == 1
     assert out["search"]["hits"][0]["id"] == "rec_00001"

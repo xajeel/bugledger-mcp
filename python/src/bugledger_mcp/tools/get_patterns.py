@@ -31,6 +31,13 @@ def get_patterns(
             )
         ),
     ],
+    stack: str | None = Field(
+        default=None,
+        description=(
+            "Optional technology to filter by, e.g. python, react. "
+            "Only bugs matching this technology stack are returned."
+        ),
+    ),
     limit: int | None = Field(
         default=None, description=("Maximum records to return, 1 to 30. Default 15.")
     ),
@@ -41,6 +48,7 @@ def get_patterns(
         data = GetPatternsSchema(
             feature_area=feature_area,
             project=project,
+            stack=stack,
             limit=limit,
         )
     except ValidationError as e:
@@ -52,6 +60,7 @@ def get_patterns(
         data.feature_area,
         data.project,
         data.limit,
+        data.stack,
     )
     conn.close()
 
@@ -64,10 +73,13 @@ def get_patterns(
         older = total - len(lines)
         lines.append(f"+{older} older records: use search_bugs to dig")
 
-    return {
+    result = {
         "feature_area": data.feature_area,
         "project": data.project,
         "count": len(rows),
         "truncated": truncated,
         "lines": lines,
     }
+    if data.stack is not None:
+        result["stack"] = data.stack
+    return result
