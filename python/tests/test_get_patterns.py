@@ -263,12 +263,12 @@ def test_tool_get_patterns_with_stack(monkeypatch, tmp_path):
     )
     conn.close()
 
-    res = get_patterns(feature_area="auth", project="shop-app", stack="python")
+    res = get_patterns(feature_area="auth", project="shop-app", stack="python", limit=None)
     assert res["count"] == 1
     assert res["stack"] == "python"
     assert len(res["lines"]) == 1
     assert "rec_00010" in res["lines"][0]
 
-    res_unfiltered = get_patterns(feature_area="auth", project="shop-app")
+    res_unfiltered = get_patterns(feature_area="auth", project="shop-app", stack=None, limit=None)
     assert res_unfiltered["count"] == 2
     assert "stack" not in res_unfiltered

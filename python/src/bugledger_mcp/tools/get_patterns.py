@@ -2,7 +2,6 @@ from typing import Annotated
 
 from fastmcp.exceptions import ToolError
 from pydantic import Field, ValidationError
-from pydantic.fields import FieldInfo
 
 from bugledger_mcp.database import db, repository
 from bugledger_mcp.schema.get_patterns import GetPatternsSchema
@@ -44,11 +43,6 @@ def get_patterns(
     ),
 ):
     """Call this BEFORE planning, writing specs, or implementing anything in a feature area. Returns the newest past bugs for that area, one line each (symptom → root cause), capped at 30 lines. Account for every line in your plan. Bugs resolved for this project are hidden; search_bugs still finds them."""
-
-    if isinstance(stack, FieldInfo):
-        stack = None
-    if isinstance(limit, FieldInfo):
-        limit = None
 
     try:
         data = GetPatternsSchema(
