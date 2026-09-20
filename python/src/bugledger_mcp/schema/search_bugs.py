@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, field_validator
 
 from bugledger_mcp.schema.record_bug import clean_slug
@@ -7,6 +9,7 @@ class SearchBugsSchema(BaseModel):
     query: str
     feature_area: str | None = None
     project: str | None = None
+    mode: Literal["any", "all"] = "any"
 
     @field_validator("query")
     @classmethod

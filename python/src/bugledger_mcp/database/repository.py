@@ -1,6 +1,7 @@
 import re
 
 _WORD_RE = re.compile(r"\w+")
+_QUERY_TOKEN_RE = re.compile(r'"([^"]+)"|(\w+)')
 
 
 def next_record_id(conn):
@@ -120,27 +121,25 @@ def get_patterns(conn, feature_area, project, limit, stack=None):
     return rows, total
 
 
-def fts_query(text):
-    """Turns free text into a safe FTS5 query. Every word is quoted so
-    punctuation from pasted error messages cannot break the query syntax,
-    and words are joined with OR so any overlap is a hit. FTS5 ranks records
-    that share more (and rarer) words first. Returns None when there are no
-    usable words."""
+def fts_query(text, mode="any"):
+    """Turn words and quoted phrases into a syntax-safe FTS5 query."""
 
-    words = []
-    for word in _WORD_RE.findall(text):
-        word = word.lower()
-        if len(word) > 1 and word not in words:
-            words.append(word)
-    if not words:
+    tokens = []
+    for phrase, word in _QUERY_TOKEN_RE.findall(text):
+        parts = [part.lower() for part in _WORD_RE.findall(phrase or word) if len(part) > 1]
+        token = " ".join(parts)
+        if token and token not in tokens:
+            tokens.append(token)
+    if not tokens:
         return None
-    return " OR ".join(f'"{word}"' for word in words)
+    operator = " AND " if mode == "all" else " OR "
+    return operator.join(f'"{token}"' for token in tokens)
 
 
-def search_bugs(conn, query, feature_area, project, limit):
+def search_bugs(conn, query, feature_area, project, limit, mode="any"):
     """FTS5 search over symptom and root_cause, best matches first."""
 
-    match = fts_query(query)
+    match = fts_query(query, mode)
     if match is None:
         return []
 
