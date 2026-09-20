@@ -1,3 +1,4 @@
+import json
 import re
 
 _WORD_RE = re.compile(r"\w+")
@@ -200,6 +201,53 @@ def list_areas(conn):
     ).fetchall()
     total = cursor.execute("SELECT COUNT(*) FROM bug_records").fetchone()[0]
     return areas, projects, total
+
+
+def export_records(conn):
+    """Returns every ledger record and its resolutions in stable id order."""
+
+    rows = conn.execute(
+        """
+        SELECT id, project, symptom, root_cause, feature_area, stack,
+               severity, fix_ref, diff_hunk, source, created_at
+        FROM bug_records
+        ORDER BY id
+        """
+    ).fetchall()
+    resolutions = conn.execute(
+        """
+        SELECT record_id, project, resolved_at
+        FROM bug_resolutions
+        ORDER BY record_id, project, resolved_at
+        """
+    ).fetchall()
+
+    resolutions_by_record = {}
+    for record_id, project, resolved_at in resolutions:
+        resolutions_by_record.setdefault(record_id, []).append(
+            {"project": project, "resolved_at": resolved_at}
+        )
+
+    columns = (
+        "id",
+        "project",
+        "symptom",
+        "root_cause",
+        "feature_area",
+        "stack",
+        "severity",
+        "fix_ref",
+        "diff_hunk",
+        "source",
+        "created_at",
+    )
+    records = []
+    for row in rows:
+        record = dict(zip(columns, row, strict=True))
+        record["stack"] = json.loads(record["stack"]) if record["stack"] else None
+        record["resolutions"] = resolutions_by_record.get(record["id"], [])
+        records.append(record)
+    return records
 
 
 def insert_bug(

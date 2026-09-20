@@ -50,6 +50,17 @@ For copy-paste setup blocks for **Codex CLI, Windsurf, Zed, and Continue**, see
 
 Restart the client. `/mcp` lists `bugledger` as connected and `/mcp__bugledger__logbug` is available.
 
+### Export the ledger
+
+Export every record, including stored fix diffs and resolution history, as JSON or Markdown:
+
+```console
+bugledger-mcp export --format json --out bugledger-backup.json
+bugledger-mcp export --format md --out bugledger.md
+```
+
+Omit `--out` to print the export to stdout. Markdown records are grouped by feature area. The command uses the same `BUGLEDGER_HOME` as the MCP server.
+
 ### Troubleshooting
 
 - **Failed to connect:** run `uvx bugledger-mcp` in a terminal. A running

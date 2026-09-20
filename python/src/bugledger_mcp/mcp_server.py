@@ -24,10 +24,25 @@ mcp = FastMCP("bugledger", instructions=INSTRUCTIONS, version=__version__)
 def main():
     parser = argparse.ArgumentParser(
         prog="bugledger-mcp",
-        description="Run the Bug Ledger MCP stdio server. Set BUGLEDGER_HOME to change the ledger directory.",
+        description="Run the Bug Ledger MCP stdio server or export the ledger. Set BUGLEDGER_HOME to change the ledger directory.",
     )
     parser.add_argument("--version", action="version", version=f"bugledger-mcp {__version__}")
-    parser.parse_args()
+    subparsers = parser.add_subparsers(dest="command")
+    export_parser = subparsers.add_parser("export", help="export every ledger record")
+    export_parser.add_argument("--format", required=True, choices=("json", "md"))
+    export_parser.add_argument("--out", help="write to this path instead of stdout")
+    args = parser.parse_args()
+
+    if args.command == "export":
+        from bugledger_mcp.database import db
+        from bugledger_mcp.export import export_ledger
+
+        conn = db.init_db()
+        try:
+            export_ledger(conn, args.format, args.out)
+        finally:
+            conn.close()
+        return
 
     import bugledger_mcp.tool_registry  # noqa: F401  (registers tools and the prompt)
     from bugledger_mcp.database import db
