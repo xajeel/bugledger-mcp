@@ -73,6 +73,9 @@ def test_handshake_exposes_tools_prompt_and_instructions(ledger):
     pattern_props = tools["get_patterns"].inputSchema["properties"]
     assert "stack" in pattern_props
     assert "filter" in pattern_props["stack"]["description"]
+    search_props = tools["search_bugs"].inputSchema["properties"]
+    assert search_props["mode"]["default"] == "any"
+    assert "exact phrase" in search_props["mode"]["description"]
 
 
 def test_logbug_prompt_returns_the_ritual(ledger):

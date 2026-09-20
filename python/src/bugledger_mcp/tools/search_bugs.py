@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastmcp.exceptions import ToolError
 from pydantic import Field, ValidationError
@@ -27,6 +27,15 @@ def search_bugs(
     project: str | None = Field(
         default=None, description=("Optional project name to narrow the search.")
     ),
+    mode: Annotated[
+        Literal["any", "all"],
+        Field(
+            description=(
+                "Match any query token (default) or require all tokens. Text inside double "
+                "quotes is always one exact phrase token."
+            )
+        ),
+    ] = "any",
 ):
     """Search past bugs by symptom or root cause: 'have we seen this before?'. Use it while debugging. Omit the filters to search the whole ledger, including bugs already resolved for this project."""
 
@@ -35,6 +44,7 @@ def search_bugs(
             query=query,
             feature_area=feature_area,
             project=project,
+            mode=mode,
         )
     except ValidationError as e:
         raise ToolError(e.errors()[0]["msg"].removeprefix("Value error, ")) from None
@@ -49,6 +59,7 @@ def search_bugs(
         data.feature_area,
         data.project,
         SEARCH_LIMIT,
+        mode=data.mode,
     )
     conn.close()
 

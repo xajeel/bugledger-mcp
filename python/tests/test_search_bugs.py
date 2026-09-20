@@ -1,3 +1,6 @@
+import pytest
+from pydantic import ValidationError
+
 from bugledger_mcp.database import repository
 from bugledger_mcp.database.repository import fts_query
 from bugledger_mcp.schema.search_bugs import SearchBugsSchema
@@ -57,6 +60,12 @@ def test_query_is_stripped():
     assert data.query == "jwt"
 
 
+def test_search_mode_defaults_to_any_and_rejects_unknown_values():
+    assert SearchBugsSchema(query="jwt").mode == "any"
+    with pytest.raises(ValidationError):
+        SearchBugsSchema(query="jwt", mode="some")
+
+
 def test_nonsense_query_returns_no_hits():
     conn = memory_db()
     hits = repository.search_bugs(conn, "zzzznotabug", None, None, 10)
@@ -105,6 +114,17 @@ def test_combined_filters_hit_when_both_match():
 
 def test_fts_query_quotes_every_word_and_joins_with_or():
     assert fts_query("JWT expiry") == '"jwt" OR "expiry"'
+
+
+def test_fts_query_preserves_phrases_and_supports_all_mode():
+    assert fts_query('upload "large files" timeout') == ('"upload" OR "large files" OR "timeout"')
+    assert fts_query('upload "large files" timeout', mode="all") == (
+        '"upload" AND "large files" AND "timeout"'
+    )
+
+
+def test_fts_query_escapes_syntax_inside_phrases():
+    assert fts_query('"jwt OR *"') == '"jwt or"'
 
 
 def test_fts_query_drops_punctuation_and_single_chars():
@@ -162,6 +182,35 @@ def test_stemming_matches_word_forms():
     hits = repository.search_bugs(conn, "hanging uploads", None, None, 10)
     conn.close()
     assert [h["id"] for h in hits] == ["rec_00002"]
+
+
+def test_quoted_phrase_does_not_match_words_separated_in_the_record():
+    conn = memory_db()
+    repository.insert_bug(
+        conn,
+        "rec_00003",
+        "archive",
+        "large uploads split files into chunks",
+        "the chunk worker reordered blocks",
+        "uploads",
+        None,
+        "medium",
+        None,
+        None,
+        "confirm",
+        "2026-08-23T00:00:00Z",
+    )
+    hits = repository.search_bugs(conn, '"large files"', None, None, 10)
+    conn.close()
+    assert [hit["id"] for hit in hits] == ["rec_00002"]
+
+
+def test_all_mode_requires_every_word_and_supports_mixed_phrases():
+    conn = memory_db()
+    assert repository.search_bugs(conn, "jwt worker", None, None, 10, mode="all") == []
+    hits = repository.search_bugs(conn, '"large files" worker', None, None, 10, mode="all")
+    conn.close()
+    assert [hit["id"] for hit in hits] == ["rec_00002"]
 
 
 def test_hits_carry_severity():

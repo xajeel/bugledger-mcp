@@ -81,7 +81,7 @@ Before implementing anything in a feature area, call bugledger get_patterns with
 | Tool | Purpose |
 |---|---|
 | `get_patterns(feature_area, project, stack?)` | Past bugs for an area, one line each, capped at 30 lines |
-| `search_bugs(query)` | Full-text search over symptoms and root causes; paste the error as is |
+| `search_bugs(query, mode)` | Full-text search over symptoms and root causes; supports quoted phrases and any/all matching |
 | `record_bug(...)` | Store a confirmed bug with its root cause and fix diff |
 | `list_areas()` | Existing feature areas and projects, so names stay consistent |
 | `update_bug` / `delete_bug` | Correct or remove a record |
