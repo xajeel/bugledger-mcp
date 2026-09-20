@@ -52,9 +52,18 @@ def test_bad_fix_ref_is_rejected():
         UpdateBugSchema(id="rec_00001", fix_ref="python/main.py")
 
 
-def test_valid_fix_ref_is_accepted():
-    data = UpdateBugSchema(id="rec_00001", fix_ref="a1b2c3d")
-    assert data.fix_ref == "a1b2c3d"
+@pytest.mark.parametrize(
+    ("fix_ref", "expected"),
+    [
+        ("a1b2c3d", "a1b2c3d"),
+        ("https://github.com/x/y/commit/a1b2c3d", "a1b2c3d"),
+        ("https://github.com/x/y/pull/20", "https://github.com/x/y/pull/20"),
+        ("#20", "#20"),
+    ],
+)
+def test_valid_fix_refs_are_accepted(fix_ref, expected):
+    data = UpdateBugSchema(id="rec_00001", fix_ref=fix_ref)
+    assert data.fix_ref == expected
 
 
 def test_unknown_record_is_missing():

@@ -94,8 +94,9 @@ def record_bug(
     fix_ref: str | None = Field(
         default=None,
         description=(
-            "Git commit hash of the fix, 7 to 40 hex chars. The server runs "
-            "`git show` on it to store the diff. Omit if there is no commit yet."
+            "Git commit hash or github.com commit URL, pull URL, or '#123' PR reference. "
+            "The server runs `git show` for commit references. Omit if there is no "
+            "commit or PR yet."
         ),
     ),
     diff_hunk: str | None = Field(

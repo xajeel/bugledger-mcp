@@ -1,3 +1,5 @@
+import re
+
 from pydantic import BaseModel, field_validator
 
 from bugledger_mcp.utils.constant import allowed_values, diff_settings, error_texts
@@ -5,6 +7,11 @@ from bugledger_mcp.utils.constant import allowed_values, diff_settings, error_te
 ROOT_CAUSE_TOO_SHORT, INVALID_SEVERITY, INVALID_SOURCE, INVALID_FIX_REF = error_texts()
 SEVERITY_VALUES, SOURCE_VALUES, MIN_ROOT_CAUSE_LEN = allowed_values()
 _, _, COMMIT_HASH_RE = diff_settings()
+COMMIT_URL_RE = re.compile(
+    r"^https://github\.com/[^/\s]+/[^/\s]+/commit/(?P<sha>[0-9a-fA-F]{7,40})/?$"
+)
+PULL_URL_RE = re.compile(r"^https://github\.com/[^/\s]+/[^/\s]+/pull/\d+/?$")
+PULL_NUMBER_RE = re.compile(r"^#\d+$")
 
 
 def clean_slug(value):
@@ -21,6 +28,19 @@ def clean_stack(value):
         if item and item not in cleaned:
             cleaned.append(item)
     return cleaned or None
+
+
+def clean_fix_ref(value):
+    if value is None or value.strip() == "":
+        return None
+    value = value.strip()
+    if COMMIT_HASH_RE.fullmatch(value):
+        return value
+    if match := COMMIT_URL_RE.fullmatch(value):
+        return match["sha"]
+    if PULL_URL_RE.fullmatch(value) or PULL_NUMBER_RE.fullmatch(value):
+        return value
+    raise ValueError(INVALID_FIX_REF)
 
 
 class RecordBugSchema(BaseModel):
@@ -84,12 +104,7 @@ class RecordBugSchema(BaseModel):
     @field_validator("fix_ref")
     @classmethod
     def check_fix_ref(cls, value):
-        if value is None or value.strip() == "":
-            return None
-        value = value.strip()
-        if not COMMIT_HASH_RE.fullmatch(value):
-            raise ValueError(INVALID_FIX_REF)
-        return value
+        return clean_fix_ref(value)
 
     @field_validator("source")
     @classmethod
