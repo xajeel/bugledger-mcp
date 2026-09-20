@@ -79,6 +79,37 @@ def test_empty_stack_becomes_none():
     assert data.stack is None
 
 
+@pytest.mark.parametrize(
+    ("fix_ref", "expected"),
+    [
+        ("a1b2c3d", "a1b2c3d"),
+        ("https://github.com/xajeel/bugledger-mcp/commit/a1b2c3d", "a1b2c3d"),
+        (
+            "https://github.com/xajeel/bugledger-mcp/pull/20",
+            "https://github.com/xajeel/bugledger-mcp/pull/20",
+        ),
+        ("#20", "#20"),
+    ],
+)
+def test_fix_references_are_accepted_and_commit_urls_are_normalized(fix_ref, expected):
+    assert RecordBugSchema(**VALID, fix_ref=fix_ref).fix_ref == expected
+
+
+@pytest.mark.parametrize(
+    "fix_ref",
+    [
+        "python/main.py",
+        "https://example.com/x/y/commit/a1b2c3d",
+        "https://github.com/x/y/commit/not-a-hash",
+        "https://github.com/x/y/pulls/20",
+        "#not-a-number",
+    ],
+)
+def test_invalid_fix_references_are_rejected(fix_ref):
+    with pytest.raises(ValidationError):
+        RecordBugSchema(**VALID, fix_ref=fix_ref)
+
+
 def _git_fails(*args, **kwargs):
     raise OSError("git not found")
 

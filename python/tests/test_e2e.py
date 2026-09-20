@@ -70,6 +70,7 @@ def test_handshake_exposes_tools_prompt_and_instructions(ledger):
     props = tools["record_bug"].inputSchema["properties"]
     assert "WHY" in props["root_cause"]["description"]
     assert props["severity"]["description"].startswith("low, medium, or high")
+    assert "pull URL" in props["fix_ref"]["description"]
     pattern_props = tools["get_patterns"].inputSchema["properties"]
     assert "stack" in pattern_props
     assert "filter" in pattern_props["stack"]["description"]

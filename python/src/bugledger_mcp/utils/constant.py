@@ -11,8 +11,8 @@ def error_texts():
     INVALID_SEVERITY = "severity must be one of: low, medium, high."
     INVALID_SOURCE = "source must be one of: slash, confirm, import."
     INVALID_FIX_REF = (
-        "fix_ref must be a git commit hash (7-40 hex chars), e.g. 'a1b2c3d'. "
-        "A file path is not a commit hash. If there is no commit yet, omit "
+        "fix_ref must be a git commit hash, a github.com commit or pull URL, "
+        "or a PR number such as '#123'. If there is no commit or PR yet, omit "
         "fix_ref and put the actual patch in diff_hunk instead."
     )
     return ROOT_CAUSE_TOO_SHORT, INVALID_SEVERITY, INVALID_SOURCE, INVALID_FIX_REF

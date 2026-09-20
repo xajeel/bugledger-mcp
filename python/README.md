@@ -79,7 +79,7 @@ Before implementing anything in a feature area, call bugledger get_patterns with
 ## Data and privacy
 
 - The ledger is `~/.bugledger/ledger.db`. Set `BUGLEDGER_HOME` to move it. Delete it any time; it is recreated on next start.
-- `record_bug` runs `git show <commit>` locally to store the fix diff. Diffs are never returned by `get_patterns` and never leave your machine.
+- `record_bug` accepts a commit hash, GitHub commit or pull URL, or `#123` PR reference. It runs `git show <commit>` locally when a commit is available to store the fix diff. Diffs are never returned by `get_patterns` and never leave your machine.
 - The server makes no network calls.
 
 ## Contributing

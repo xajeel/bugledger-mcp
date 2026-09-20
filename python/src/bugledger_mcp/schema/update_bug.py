@@ -1,9 +1,8 @@
 from pydantic import BaseModel, field_validator, model_validator
 
-from bugledger_mcp.schema.record_bug import clean_slug, clean_stack
+from bugledger_mcp.schema.record_bug import clean_fix_ref, clean_slug, clean_stack
 from bugledger_mcp.utils.constant import (
     allowed_values,
-    diff_settings,
     error_texts,
     mutation_settings,
     record_id_settings,
@@ -11,7 +10,6 @@ from bugledger_mcp.utils.constant import (
 
 ROOT_CAUSE_TOO_SHORT, INVALID_SEVERITY, INVALID_SOURCE, INVALID_FIX_REF = error_texts()
 SEVERITY_VALUES, SOURCE_VALUES, MIN_ROOT_CAUSE_LEN = allowed_values()
-_, _, COMMIT_HASH_RE = diff_settings()
 RECORD_ID_RE, INVALID_RECORD_ID = record_id_settings()
 NO_FIELDS_TO_UPDATE = mutation_settings()
 
@@ -89,12 +87,7 @@ class UpdateBugSchema(BaseModel):
     @field_validator("fix_ref")
     @classmethod
     def check_fix_ref(cls, value):
-        if value is None or value.strip() == "":
-            return None
-        value = value.strip()
-        if not COMMIT_HASH_RE.fullmatch(value):
-            raise ValueError(INVALID_FIX_REF)
-        return value
+        return clean_fix_ref(value)
 
     @model_validator(mode="after")
     def check_any_field(self):

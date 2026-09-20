@@ -29,7 +29,8 @@ def update_bug(
     ),
     severity: str | None = Field(default=None, description="low, medium, or high."),
     fix_ref: str | None = Field(
-        default=None, description=("Git commit hash of the fix, 7 to 40 hex chars.")
+        default=None,
+        description=("Git commit hash, github.com commit or pull URL, or '#123' PR reference."),
     ),
     diff_hunk: str | None = Field(
         default=None,
