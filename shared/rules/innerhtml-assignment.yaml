@@ -1,0 +1,19 @@
+rules:
+  - id: bugledger-innerhtml-assignment
+    languages:
+      - javascript
+      - typescript
+    severity: WARNING
+    message: >
+      Assigning markup to innerHTML can execute attacker-controlled content.
+      Prefer textContent or DOM construction APIs, or sanitize the markup with
+      a well-reviewed HTML sanitizer before assigning it.
+    patterns:
+      - pattern: $ELEMENT.innerHTML = $VALUE
+      - pattern-not: $ELEMENT.innerHTML = DOMPurify.sanitize(...)
+      - pattern-not: $ELEMENT.innerHTML = sanitizeHtml(...)
+    metadata:
+      category: security
+      cwe: "CWE-79: Improper Neutralization of Input During Web Page Generation"
+      confidence: MEDIUM
+      bugledger-stacks: [javascript, typescript]
