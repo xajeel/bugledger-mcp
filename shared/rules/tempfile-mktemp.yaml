@@ -1,0 +1,15 @@
+rules:
+  - id: bugledger-tempfile-mktemp
+    languages:
+      - python
+    severity: WARNING
+    message: >
+      tempfile.mktemp() returns a name without creating the file, leaving a
+      race window in which another process can claim that path. Use mkstemp(),
+      NamedTemporaryFile(), or TemporaryDirectory() instead.
+    pattern: tempfile.mktemp(...)
+    metadata:
+      category: security
+      cwe: "CWE-377: Insecure Temporary File"
+      confidence: HIGH
+      bugledger-stacks: [python]
