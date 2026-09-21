@@ -1,0 +1,32 @@
+rules:
+  - id: bugledger-tls-verify-disabled
+    languages:
+      - python
+    severity: ERROR
+    message: >
+      TLS certificate verification is disabled. This allows a
+      man-in-the-middle attacker to impersonate the remote service. Keep
+      verification enabled or provide a trusted CA bundle.
+    pattern-either:
+      - patterns:
+          - pattern: requests.$METHOD(..., verify=False, ...)
+          - metavariable-regex:
+              metavariable: $METHOD
+              regex: ^(delete|get|head|options|patch|post|put|request)$
+      - patterns:
+          - pattern: httpx.$METHOD(..., verify=False, ...)
+          - metavariable-regex:
+              metavariable: $METHOD
+              regex: ^(delete|get|head|options|patch|post|put|request|stream)$
+      - pattern: httpx.Client(..., verify=False, ...)
+      - pattern: httpx.AsyncClient(..., verify=False, ...)
+      - patterns:
+          - pattern-inside: |
+              $SESSION = requests.Session(...)
+              ...
+          - pattern: $SESSION.verify = False
+    metadata:
+      category: security
+      cwe: "CWE-295: Improper Certificate Validation"
+      confidence: HIGH
+      bugledger-stacks: [python]
