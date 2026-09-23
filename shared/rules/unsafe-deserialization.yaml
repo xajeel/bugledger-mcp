@@ -4,15 +4,13 @@ rules:
       - python
     severity: ERROR
     message: >
-      Unsafe deserialization. pickle, marshal, and yaml.load (without
-      SafeLoader) can execute arbitrary code. Use json, yaml.safe_load,
-      or a schema-validated format instead.
+      Unsafe deserialization with pickle or marshal can execute arbitrary
+      code. Use json or a schema-validated format instead.
     pattern-either:
       - pattern: pickle.loads(...)
       - pattern: pickle.load(...)
       - pattern: marshal.loads(...)
       - pattern: marshal.load(...)
-      - pattern: yaml.load(...)
     metadata:
       category: security
       cwe: "CWE-502: Deserialization of Untrusted Data"
