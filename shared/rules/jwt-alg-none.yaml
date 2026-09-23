@@ -1,0 +1,19 @@
+rules:
+  - id: bugledger-jwt-alg-none
+    languages:
+      - python
+    severity: ERROR
+    message: >
+      JWT decoding permits the unsigned "none" algorithm. Attackers can
+      forge claims without a valid signature. Remove "none" and allow only
+      the specific signed algorithms your application expects.
+    pattern-either:
+      - pattern: jwt.decode(..., algorithms=[..., "none", ...], ...)
+      - pattern: jwt.decode(..., algorithms=(..., "none", ...), ...)
+      - pattern: $JWT.decode(..., algorithms=[..., "none", ...], ...)
+      - pattern: $JWT.decode(..., algorithms=(..., "none", ...), ...)
+    metadata:
+      category: security
+      cwe: "CWE-347: Improper Verification of Cryptographic Signature"
+      confidence: HIGH
+      bugledger-stacks: [python]
