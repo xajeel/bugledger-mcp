@@ -1,0 +1,33 @@
+rules:
+  - id: bugledger-child-process-template
+    languages:
+      - javascript
+      - typescript
+    severity: ERROR
+    message: >
+      Shell command built with dynamic input. An attacker can inject arbitrary
+      commands. Use execFile or spawn without a shell and pass an argument array.
+    pattern-either:
+      - pattern: child_process.exec(`...${$VAR}...`)
+      - pattern: child_process.exec("..." + $VAR + "...")
+      - pattern: child_process.exec("..." + $VAR)
+      - pattern: child_process.execSync(`...${$VAR}...`)
+      - pattern: child_process.execSync("..." + $VAR + "...")
+      - pattern: child_process.execSync("..." + $VAR)
+      - pattern: require("child_process").exec(`...${$VAR}...`)
+      - pattern: require("child_process").exec("..." + $VAR)
+      - pattern: require("child_process").execSync(`...${$VAR}...`)
+      - pattern: require("child_process").execSync("..." + $VAR)
+      - pattern: require("node:child_process").exec(`...${$VAR}...`)
+      - pattern: require("node:child_process").exec("..." + $VAR)
+      - pattern: require("node:child_process").execSync(`...${$VAR}...`)
+      - pattern: require("node:child_process").execSync("..." + $VAR)
+      - pattern: exec(`...${$VAR}...`)
+      - pattern: exec("..." + $VAR)
+      - pattern: execSync(`...${$VAR}...`)
+      - pattern: execSync("..." + $VAR)
+    metadata:
+      category: security
+      cwe: "CWE-78: OS Command Injection"
+      confidence: HIGH
+      bugledger-stacks: [javascript, typescript]
