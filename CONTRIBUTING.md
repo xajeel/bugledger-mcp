@@ -106,7 +106,7 @@ Rules are the product's free "wow" and also how it gets uninstalled if they are 
 2. A fixture next to it, `shared/rules/<name>.py` / `.js`, with `# ruleid: <id>` above every line that must match and `# ok: <id>` above lines that must not.
 3. Severity policy: `ERROR` blocks pull requests, so use it only for high-confidence security findings (injection, secrets, unsafe deserialization). Everything else is `WARNING` (advisory, printed, never fails CI).
 4. Verify: `uv run --group rules semgrep --validate --config ../shared/rules --metrics=off` and `… --test ../shared/rules`.
-5. Run the pack on a healthy real project (a few installed site-packages libraries work well) and put the hit count in the PR. A rule that fires on healthy code gets fixed or cut.
+5. Run `uv run --directory python --group rules python ../scripts/measure_rules.py` to measure the pack against the active environment's installed packages. Put the relevant hit count in the PR. A rule that fires on healthy code gets fixed or cut.
 
 ## Releasing (maintainers)
 
