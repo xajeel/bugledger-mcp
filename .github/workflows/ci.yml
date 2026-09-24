@@ -16,12 +16,30 @@ jobs:
       - run: uvx ruff@0.16.6 format --check .
 
   python-tests:
-    name: Python ${{ matrix.python }}
-    runs-on: ubuntu-latest
+    name: Python ${{ matrix.python }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        include:
+          - os: ubuntu-latest
+            python: "3.10"
+          - os: ubuntu-latest
+            python: "3.11"
+          - os: ubuntu-latest
+            python: "3.12"
+          - os: ubuntu-latest
+            python: "3.13"
+          - os: ubuntu-latest
+            python: "3.14"
+          - os: macos-latest
+            python: "3.10"
+          - os: macos-latest
+            python: "3.14"
+          - os: windows-latest
+            python: "3.10"
+          - os: windows-latest
+            python: "3.14"
     defaults:
       run:
         working-directory: python
