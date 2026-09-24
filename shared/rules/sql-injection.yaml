@@ -39,3 +39,27 @@ rules:
       cwe: "CWE-89: SQL Injection"
       confidence: HIGH
       bugledger-stacks: [javascript, typescript]
+
+  - id: bugledger-sql-injection-java
+    languages:
+      - java
+    severity: ERROR
+    message: >
+      SQL query built with string concatenation. Use a PreparedStatement
+      with placeholders and bind values to prevent SQL injection.
+    patterns:
+      - pattern-either:
+          - pattern: $STMT.executeQuery("..." + $VALUE)
+          - pattern: $STMT.executeQuery("..." + $VALUE + ...)
+          - pattern: $STMT.executeUpdate("..." + $VALUE)
+          - pattern: $STMT.executeUpdate("..." + $VALUE + ...)
+          - pattern: $STMT.execute("..." + $VALUE)
+          - pattern: $STMT.execute("..." + $VALUE + ...)
+      - metavariable-type:
+          metavariable: $STMT
+          type: Statement
+    metadata:
+      category: security
+      cwe: "CWE-89: SQL Injection"
+      confidence: HIGH
+      bugledger-stacks: [java]
